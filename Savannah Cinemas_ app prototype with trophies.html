@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Savannah Cinemas: app prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#ECE7DD; --canvas-text:#1B1B24; --canvas-muted:#6B6A76; --canvas-chip:#DDD6C7; --canvas-line:#CFC8B8;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--canvas:#0C0C12; --canvas-text:#F2EADB; --canvas-muted:#8E8C9C; --canvas-chip:#1A1A28; --canvas-line:#2A2A3C;}
+}
+:root[data-theme="dark"]{--canvas:#0C0C12; --canvas-text:#F2EADB; --canvas-muted:#8E8C9C; --canvas-chip:#1A1A28; --canvas-line:#2A2A3C;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--canvas-text);font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+.page{max-width:1000px;margin:0 auto;padding:44px 24px 72px}
+.page h1{font-family:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;font-weight:800;font-size:clamp(28px,4vw,42px);letter-spacing:-.02em;margin:0 0 10px;line-height:1.05}
+.page p.lead{margin:0 0 40px;max-width:60ch;color:var(--canvas-muted);font-size:16px;line-height:1.55}
+.stage{display:flex;gap:56px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.panel{width:300px;position:sticky;top:24px}
+.panel h2{font-family:'Bricolage Grotesque','DM Sans',sans-serif;font-size:19px;margin:0 0 6px}
+.panel p{margin:0 0 18px;font-size:14px;line-height:1.5;color:var(--canvas-muted)}
+.panel h3{font-size:13px;font-weight:700;color:var(--canvas-muted);margin:18px 0 8px}
+.jg{display:flex;flex-wrap:wrap;gap:7px}
+.jb{font:inherit;font-size:13.5px;font-weight:500;color:var(--canvas-text);background:var(--canvas-chip);border:1px solid var(--canvas-line);border-radius:999px;padding:7px 13px;cursor:pointer}
+.jb:hover{border-color:#EDAA3B}
+.jb:focus-visible{outline:2px solid #EDAA3B;outline-offset:2px}
+.jb.reset{background:none;margin-top:20px}
+
+/* ---------- Phone ---------- */
+.ph{
+  --bg:#14141C; --surface:#1E1E2A; --surface2:#292939; --line:#353549;
+  --text:#F2EADB; --muted:#9E9CAF; --gold:#EDAA3B; --gold-ink:#1B1204; --clay:#D2512F; --ok:#4DB88A; --bronze:#CD7F32;
+  position:relative;width:375px;height:800px;flex:none;border-radius:50px;padding:9px;background:#050508;
+  box-shadow:0 0 0 2px #2a2a36,0 30px 60px -20px rgba(0,0,0,.55);
+  font-family:'DM Sans',system-ui,sans-serif;color:var(--text);
+}
+.scr{position:relative;width:100%;height:100%;border-radius:42px;background:var(--bg);overflow:hidden}
+.status{position:absolute;inset:0 0 auto 0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:6px 28px 0;font-size:14px;font-weight:700;z-index:80;pointer-events:none}
+.status .notch{position:absolute;left:50%;top:10px;width:96px;height:26px;border-radius:14px;background:#000;transform:translateX(-50%)}
+.body{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:56px 0 110px}
+.body::-webkit-scrollbar{display:none}
+.homebar{position:absolute;left:50%;bottom:7px;width:120px;height:5px;border-radius:3px;background:#F2EADB;opacity:.85;transform:translateX(-50%);z-index:90}
+.ph h2,.ph h3,.ph h4,.ph .disp{font-family:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;letter-spacing:-.015em;margin:0}
+:where(.ph button,.ph input){font:inherit;color:inherit}
+:where(.ph button){cursor:pointer;border:0;background:none;padding:0;text-align:inherit}
+.ph button:focus-visible,.ph input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.ic{display:block;flex:none}
+.toast{position:absolute;left:50%;top:60px;transform:translate(-50%,-14px);opacity:0;pointer-events:none;z-index:120;background:#F2EADB;color:#1B1B24;font-size:13.5px;font-weight:700;padding:10px 16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s,transform .2s;white-space:nowrap;max-width:88%;overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.tabsbar{position:absolute;left:0;right:0;bottom:0;z-index:35;display:flex;justify-content:space-around;padding:10px 6px 26px;background:linear-gradient(180deg,rgba(20,20,28,0),rgba(20,20,28,.96) 26%);backdrop-filter:blur(10px)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;font-size:11px;color:var(--muted);font-weight:500}
+.tab.on{color:var(--gold)}
+.tab.on .ic{filter:drop-shadow(0 0 8px rgba(237,170,59,.45))}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:14px;font-weight:700;font-size:15px}
+.btn.gold{background:var(--gold);color:var(--gold-ink)}
+.btn.gold[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:rgba(255,255,255,.12)}
+.btn.out{border:1px solid var(--line)}
+.btn.warn{background:rgba(210,81,47,.12);border:1px solid rgba(210,81,47,.5);color:#F09479}
+.btn.block{width:100%}
+.round{width:40px;height:40px;border-radius:50%;background:var(--surface);display:grid;place-items:center;flex:none}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 20px 14px}
+.topbar h2{font-size:26px;font-weight:800}
+.logo{display:flex;align-items:center;gap:9px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo i{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFD98A,var(--gold) 55%,var(--clay));display:block;box-shadow:0 0 16px rgba(237,170,59,.4)}
+.loc{display:inline-flex;align-items:center;gap:6px;background:var(--surface);padding:9px 12px 9px 10px;border-radius:999px;font-size:13px;font-weight:500}
+.search{margin:0 20px;display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:14px;padding:0 14px;color:var(--muted);height:48px}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:15px;color:var(--text)}
+.search input::placeholder{color:var(--muted)}
+.search:focus-within{box-shadow:0 0 0 2px var(--gold)}
+.search input:focus-visible{outline:none}
+.chips{display:flex;gap:8px;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:9px 15px;border-radius:999px;background:var(--surface);font-size:14px;font-weight:500;color:var(--muted)}
+.chip.on{background:var(--gold);color:var(--gold-ink);font-weight:700}
+.sec{display:flex;align-items:baseline;justify-content:space-between;padding:26px 20px 12px}
+.sec h3{font-size:21px;font-weight:800}
+.sec a,.sec button{font-size:13px;color:var(--gold);font-weight:700}
+
+/* posters */
+.poster{container-type:inline-size;position:relative;aspect-ratio:2/3;border-radius:14px;overflow:hidden;background:linear-gradient(175deg,var(--a) 0%,var(--b) 115%)}
+.poster::before{content:"";position:absolute}
+.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(8,8,12,.78))}
+.poster .pt{position:absolute;left:8cqw;right:8cqw;bottom:8cqw;z-index:2;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15cqw;line-height:.95;letter-spacing:-.02em;color:#FFF6E4}
+.sun::before{left:50%;top:36%;width:58%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:var(--c);box-shadow:0 0 0 9cqw rgba(255,255,255,.07),0 0 0 20cqw rgba(255,255,255,.04)}
+.arch::before{left:50%;bottom:30%;width:52%;height:46%;transform:translateX(-50%);border-radius:999px 999px 0 0;background:var(--c);opacity:.92;box-shadow:0 0 0 7cqw rgba(255,255,255,.08)}
+.bands::before{inset:0 0 38% 0;background:repeating-linear-gradient(90deg,var(--c) 0 8%,transparent 8% 16%,var(--b) 16% 24%,transparent 24% 32%);opacity:.6;transform:skewY(-8deg) scale(1.2)}
+.glow::before{left:50%;top:32%;width:90%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,var(--c) 0 22%,transparent 68%)}
+.nopt .pt{display:none}
+.hscroll{display:flex;gap:14px;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.hscroll::-webkit-scrollbar{display:none}
+.mini{flex:none;width:138px;display:block}
+.mini .meta{padding:9px 2px 0}
+.mini b{display:block;font-size:15px;font-weight:700;line-height:1.2}
+.mini span{font-size:12.5px;color:var(--muted)}
+.rate{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--gold)}
+.rate svg{fill:currentColor;stroke:none}
+.tag{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(255,255,255,.14);color:#FFF6E4;backdrop-filter:blur(6px)}
+.fr{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;margin:0 20px 10px;padding:12px;border-radius:16px;background:var(--surface);width:calc(100% - 40px)}
+.fr b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:17px}
+.fr small{color:var(--muted);font-size:13px}
+.empty{padding:44px 34px 0;text-align:center;color:var(--muted);font-size:14.5px;line-height:1.5}
+.empty .ico{width:76px;height:76px;border-radius:24px;margin:0 auto 18px;background:rgba(237,170,59,.1);color:var(--gold);display:grid;place-items:center}
+.empty h3{font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px}
+.empty .btn{margin-top:22px;height:46px}
+
+/* hero + imax */
+.hero{margin:18px 20px 0;position:relative;border-radius:22px;overflow:hidden;height:300px;background:linear-gradient(160deg,#2A1608,#B4581E 70%,#EDAA3B 130%)}
+.hero .sunb{position:absolute;right:-40px;top:-20px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#FFE3A6,#EDAA3B 55%,#D2512F);box-shadow:0 0 0 24px rgba(255,255,255,.07),0 0 0 54px rgba(255,255,255,.04)}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,20,28,0) 30%,rgba(20,20,28,.95));pointer-events:none}
+.hero .in{position:absolute;left:18px;right:18px;bottom:18px;z-index:2}
+.hero h2{font-size:38px;font-weight:800;line-height:.95;color:#FFF6E4}
+.hero .row{display:flex;gap:8px;align-items:center;margin:10px 0 14px;flex-wrap:wrap}
+.hero .top-l{position:absolute;left:16px;top:16px;z-index:2}
+.hero .btns{display:flex;gap:10px}
+.hero .btns .btn.gold{flex:1}
+.hero .btns .btn.ghost{width:48px;padding:0}
+.imax{margin:8px 20px 0;border-radius:20px;padding:20px;position:relative;overflow:hidden;background:linear-gradient(120deg,#22223A,#332248 60%,#5A2B3F)}
+.imax h3{font-size:22px;font-weight:800;line-height:1.05;max-width:11ch}
+.imax p{margin:8px 0 14px;font-size:13.5px;color:#C5C2D6;line-height:1.45;max-width:24ch}
+.imax .rings{position:absolute;right:-50px;top:50%;width:190px;height:190px;transform:translateY(-50%);border-radius:50%;border:2px solid rgba(237,170,59,.55);box-shadow:0 0 0 18px rgba(237,170,59,.09),0 0 0 38px rgba(237,170,59,.05),inset 0 0 40px rgba(237,170,59,.2)}
+.imax .btn{height:40px;font-size:14px;padding:0 16px;position:relative}
+
+/* detail */
+.dhero{position:relative;height:400px;margin-top:-56px}
+.dhero .poster{position:absolute;inset:0;border-radius:0;aspect-ratio:auto}
+.dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,20,28,.35) 0%,rgba(20,20,28,0) 28%,rgba(20,20,28,.55) 66%,var(--bg) 100%);pointer-events:none}
+.dnav{position:absolute;left:16px;right:16px;top:56px;display:flex;justify-content:space-between;z-index:3}
+.dnav .round{background:rgba(20,20,28,.6);backdrop-filter:blur(8px)}
+.dtitle{position:relative;z-index:2;margin:-96px 20px 0}
+.dtitle h2{font-size:44px;font-weight:800;line-height:.92}
+.facts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.fact{padding:6px 11px;border-radius:999px;background:var(--surface);font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center}
+.syn{padding:16px 20px 0;color:#CFCBDD;font-size:15px;line-height:1.55;max-width:44ch}
+.cast{padding:10px 20px 0;font-size:13.5px;color:var(--muted)}
+.cast b{color:var(--text);font-weight:500}
+.dates{display:flex;gap:8px;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.dates::-webkit-scrollbar{display:none}
+.date{flex:none;width:58px;padding:10px 0;border-radius:14px;background:var(--surface);text-align:center;border:1px solid transparent}
+.date small{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.date b{font-family:'Bricolage Grotesque',sans-serif;font-size:20px}
+.date.on{background:var(--gold);color:var(--gold-ink)}
+.date.on small{color:rgba(27,18,4,.7)}
+.cin{margin:0 20px 12px;padding:16px;border-radius:18px;background:var(--surface)}
+.cin header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cin header b{font-size:16px}
+.cin header span{font-size:12.5px;color:var(--muted)}
+.fmt{font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 8px}
+.fmt.first{margin-top:0}
+.times{display:flex;gap:8px;flex-wrap:wrap}
+.time{padding:9px 13px;border-radius:11px;border:1px solid var(--line);font-size:14px;font-weight:700}
+.time.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.time.sold{opacity:.4;text-decoration:line-through;cursor:not-allowed}
+.cta{position:absolute;left:0;right:0;bottom:0;z-index:36;padding:14px 20px 28px;background:linear-gradient(180deg,rgba(20,20,28,0),var(--bg) 32%);display:flex;align-items:center;gap:14px}
+.cta .sum{flex:1;min-width:0}
+.cta .sum small{display:block;font-size:12.5px;color:var(--muted)}
+.cta .sum b{font-family:'Bricolage Grotesque',sans-serif;font-size:22px}
+.cta .btn{flex:1.1}
+
+/* seats */
+.sh{display:flex;align-items:center;gap:12px;padding:6px 20px 0}
+.sh .t{flex:1;min-width:0}
+.sh h3{font-size:19px;font-weight:800}
+.sh small{color:var(--muted);font-size:13px}
+.screen{margin:22px 30px 0;position:relative;height:54px}
+.screen svg{position:absolute;inset:0;width:100%;height:100%}
+.hall{padding:14px 12px 0}
+.rows{display:flex;flex-direction:column;gap:9px;align-items:center}
+.srow{display:flex;align-items:center;gap:6px}
+.srow em{width:14px;font-style:normal;font-size:11px;color:var(--muted);text-align:center;font-weight:700}
+.seat{width:24px;height:22px;border-radius:7px 7px 4px 4px;background:var(--surface2);transition:transform .12s,background .12s}
+.seat.gap{width:14px;background:none;pointer-events:none}
+.seat.taken{background:#1B1B26;box-shadow:inset 0 0 0 1px #2B2B3B;pointer-events:none}
+.seat.vip{box-shadow:inset 0 0 0 1.5px var(--clay);background:#2B2230}
+.seat.sel{background:var(--gold);transform:translateY(-2px);box-shadow:0 4px 12px rgba(237,170,59,.4)}
+.legend{display:flex;justify-content:center;gap:16px;padding:22px 20px 0;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:14px;height:13px;border-radius:5px 5px 3px 3px;background:var(--surface2);display:block}
+.legend i.t{background:#1B1B26;box-shadow:inset 0 0 0 1px #2B2B3B}
+.legend i.s{background:var(--gold)}
+.legend i.v{background:#2B2230;box-shadow:inset 0 0 0 1.5px var(--clay)}
+.selrow{margin:20px 20px 0;padding:14px 16px;border-radius:16px;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.selrow small{display:block;color:var(--muted);font-size:12.5px}
+.selrow b{font-size:16px}
+
+/* ticket */
+.okhead{text-align:center;padding:4px 30px 0}
+.okhead .badge{width:52px;height:52px;border-radius:50%;background:rgba(77,184,138,.16);color:var(--ok);display:grid;place-items:center;margin:0 auto 12px}
+.okhead h2{font-size:28px;font-weight:800}
+.okhead p{margin:6px 0 0;color:var(--muted);font-size:14.5px;line-height:1.45}
+.ticket{margin:22px 20px 0;border-radius:22px;background:#F2EADB;color:#1B1B24;position:relative}
+.ticket .top2{display:flex;gap:14px;padding:16px}
+.ticket .top2 .poster{width:84px;flex:none;border-radius:10px}
+.ticket h3{font-size:24px;font-weight:800;line-height:1}
+.ticket .tm{font-size:13px;color:#6E6A60;margin-top:6px;line-height:1.45}
+.ticket .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 8px;padding:0 16px 18px}
+.ticket .grid3 small{display:block;font-size:11.5px;color:#7A766B}
+.ticket .grid3 b{font-size:15px}
+.perf{position:relative;border-top:2px dashed #CDC4B1;margin:0 14px}
+.perf::before,.perf::after{content:"";position:absolute;top:-13px;width:24px;height:24px;border-radius:50%;background:var(--bg)}
+.perf::before{left:-26px}
+.perf::after{right:-26px}
+.qr{display:flex;align-items:center;gap:16px;padding:16px}
+.qr svg{width:112px;height:112px;flex:none}
+.qr div small{display:block;font-size:12px;color:#7A766B}
+.qr div b{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;letter-spacing:.02em}
+.qr div p{margin:8px 0 0;font-size:12.5px;color:#6E6A60;line-height:1.4}
+.snack{margin:14px 20px 0;padding:14px 16px;border-radius:16px;background:var(--surface);display:flex;align-items:center;gap:14px;width:calc(100% - 40px)}
+.snack .em{width:46px;height:46px;border-radius:13px;background:rgba(237,170,59,.15);display:grid;place-items:center;font-size:24px}
+.snack b{display:block;font-size:15px}
+.snack small{color:var(--muted);font-size:13px;line-height:1.4}
+.two{display:flex;gap:10px;padding:14px 20px 0}
+.two .btn{flex:1;height:46px;font-size:14px}
+
+/* cinemas */
+.map{margin:16px 20px 0;height:190px;border-radius:20px;position:relative;overflow:hidden;background:#1A1A26}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.pin{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center}
+.pin b{background:var(--gold);color:var(--gold-ink);font-size:11.5px;padding:4px 8px;border-radius:8px;white-space:nowrap}
+.pin i{width:2px;height:8px;background:var(--gold);display:block}
+.pin.alt b{background:var(--surface2);color:var(--text)}
+.pin.alt i{background:var(--surface2)}
+.ccard{margin:0 20px 12px;padding:16px;border-radius:18px;background:var(--surface)}
+.ccard .h{display:flex;justify-content:space-between;gap:10px}
+.ccard h3{font-size:18px;font-weight:800}
+.ccard .a{font-size:13px;color:var(--muted);margin-top:3px}
+.dist{font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
+.ccard .f{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.ccard .f span{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:7px;background:var(--surface2)}
+.ccard .f span.g{background:rgba(237,170,59,.16);color:var(--gold)}
+.ccard .ft{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.ccard .ft b{color:var(--ok);font-weight:700}
+
+/* offers */
+.card{margin:6px 20px 0;padding:20px;border-radius:24px;position:relative;overflow:hidden;background:linear-gradient(135deg,#E9B57A,#CD7F32 58%,#8E4A1E);color:#1B1204}
+.card::before{content:"";position:absolute;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;border:2px solid rgba(27,18,4,.22);box-shadow:0 0 0 22px rgba(27,18,4,.06),0 0 0 46px rgba(27,18,4,.04)}
+.card small{font-size:13px;font-weight:700;opacity:.8;position:relative}
+.card .pts{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:52px;line-height:1;letter-spacing:-.03em;margin:6px 0 2px;position:relative}
+.card .pts span{font-size:18px;font-weight:600;letter-spacing:0}
+.card .bar{height:8px;border-radius:5px;background:rgba(27,18,4,.2);margin:16px 0 8px;overflow:hidden;position:relative}
+.card .bar i{display:block;height:100%;border-radius:5px;background:#1B1204}
+.card .nx{font-size:13px;font-weight:500;position:relative}
+.card .btn{margin-top:14px;background:#1B1204;color:#F2EADB;height:44px;position:relative}
+.offer{margin:0 20px 12px;border-radius:18px;background:var(--surface);display:flex;overflow:hidden}
+.offer .l{width:88px;flex:none;display:grid;place-items:center;text-align:center;padding:10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;line-height:1}
+.offer .l big{font-size:30px;display:block}
+.offer .l small{font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif}
+.offer .r{padding:14px 14px 14px 16px;flex:1;min-width:0;border-left:2px dashed var(--bg)}
+.offer .r b{display:block;font-size:15.5px;margin-bottom:4px}
+.offer .r p{margin:0 0 10px;font-size:13px;color:var(--muted);line-height:1.4}
+.offer .r .code{display:inline-block;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;border:1px dashed var(--line);letter-spacing:.06em}
+.o1 .l{background:#4A2A18;color:#F7C873}
+.o2 .l{background:#1F3A35;color:#7FE0B5}
+.o3 .l{background:#3A2246;color:#E9A8F0}
+
+/* profile */
+.prof{display:flex;gap:16px;align-items:center;padding:0 20px}
+.av{position:relative;flex:none}
+.avatar{position:relative;overflow:hidden;width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#F4C25E,#E58F2B);color:var(--gold-ink);display:grid;place-items:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:30px;box-shadow:0 8px 28px rgba(237,170,59,.35)}
+.camera{position:absolute;right:-2px;bottom:-2px;width:30px;height:30px;border-radius:50%;background:var(--bg);border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center}
+.pi{min-width:0}
+.pname{font-size:23px;font-weight:800;line-height:1.05}
+.pmeta{margin-top:7px;display:grid;gap:3px;font-size:13px;color:var(--muted)}
+.pmeta span{display:flex;align-items:center;gap:7px;min-width:0}
+.pmeta span i{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pmeta svg{color:var(--gold)}
+.tier{display:inline-flex;gap:6px;align-items:center;margin-top:10px;padding:5px 12px 5px 9px;border-radius:999px;background:rgba(205,127,50,.16);border:1px solid rgba(205,127,50,.5);color:#E4A872;font-size:12px;font-weight:700}
+.tier svg{fill:currentColor;stroke:none}
+.acts{display:flex;gap:10px;padding:18px 20px 0}
+.acts .btn{flex:1;height:44px;font-size:14px;border-radius:12px}
+.stats{margin:18px 20px 0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-radius:18px;padding:14px 0}
+.stats div{text-align:center;border-left:1px solid var(--line);padding:0 4px}
+.stats div:first-child{border-left:0}
+.stats b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:800;color:var(--gold);line-height:1.15}
+.stats small{font-size:11.5px;color:var(--muted)}
+.ptabs{margin:18px 20px 0;display:flex;padding:4px;border-radius:14px;background:var(--surface)}
+.ptab{flex:1;padding:10px 0;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--muted);text-align:center!important}
+.ptab.on{background:var(--gold);color:var(--gold-ink);font-weight:700}
+.list{padding:16px 20px 0;display:grid;gap:12px}
+.bk{display:grid;grid-template-columns:64px 1fr;gap:14px;padding:14px;border-radius:18px;background:var(--surface)}
+.bk .poster{border-radius:9px}
+.bk h4{margin:0 0 7px;font-size:17px;font-weight:800}
+.bk .m{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+.bk .m span{display:flex;gap:7px;align-items:center}
+.bk .m svg{color:var(--gold)}
+.bk .foot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--line)}
+.ref{font-size:12px;font-weight:700;letter-spacing:.07em;padding:4px 9px;border-radius:7px;background:rgba(237,170,59,.12);color:var(--gold)}
+.st{font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px}
+.st.up{background:rgba(77,184,138,.15);color:#8EDDB9;border:1px solid rgba(77,184,138,.3)}
+.st.past{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--line)}
+.st.can{background:rgba(210,81,47,.14);color:#F09479;border:1px solid rgba(210,81,47,.3)}
+.bk.dim .poster{opacity:.55;filter:saturate(.6)}
+.hlink{display:flex;align-items:center;gap:14px;margin:16px 20px 0;padding:14px 16px;border-radius:16px;background:var(--surface);width:calc(100% - 40px)}
+.hlink .em{width:42px;height:42px;border-radius:12px;background:rgba(237,170,59,.12);color:var(--gold);display:grid;place-items:center}
+.hlink b{display:block;font-size:15px}
+.hlink small{color:var(--muted);font-size:13px}
+.whead{display:flex;justify-content:space-between;align-items:baseline;padding:20px 20px 0}
+.whead h3{font-size:19px;font-weight:800}
+.whead small{font-size:12.5px;color:var(--muted)}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 20px 0}
+.wc{background:var(--surface);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.wc .poster{border-radius:0}
+.wx{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(20,20,28,.85);border:1px solid var(--line);display:grid;place-items:center;z-index:3;color:var(--muted)}
+.wr{position:absolute;left:8px;bottom:8px;z-index:3;padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.8);color:var(--gold);font-size:11px;font-weight:700}
+.wi{padding:11px 12px 12px}
+.wi b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;line-height:1.2;min-height:36px}
+.wi small{display:block;color:var(--muted);font-size:12px;margin:2px 0 10px}
+.wi .btn{width:100%;height:36px;font-size:13px;border-radius:10px}
+.grp{margin:14px 20px 0;background:var(--surface);border-radius:18px;padding:2px 16px 4px}
+.grp h4{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:800;padding:14px 0 12px}
+.grp h4 svg{color:var(--gold)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--line);width:100%}
+.row .l b{font-size:14.5px;font-weight:500;display:block}
+.row .l small{color:var(--muted);font-size:12.5px;display:block;margin-top:1px}
+.row .v{font-size:13.5px;color:var(--gold);font-weight:500;display:flex;gap:4px;align-items:center;text-align:right}
+.row.danger .l b{color:#F09479}
+.tg{width:46px;height:28px;border-radius:14px;background:var(--surface2);position:relative;flex:none;transition:background .15s}
+.tg::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#F2EADB;transition:transform .15s}
+.tg.on{background:var(--gold)}
+.tg.on::after{transform:translateX(18px);background:var(--gold-ink)}
+
+/* history */
+.hs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px}
+.hs div{background:var(--surface);border-radius:16px;padding:14px 16px}
+.hs b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;color:var(--gold);line-height:1.1}
+.hs small{color:var(--muted);font-size:12.5px}
+.mon{padding:22px 20px 10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px}
+.stub{margin:0 20px 12px;border-radius:18px;background:#F2EADB;color:#1B1B24;position:relative;padding:14px}
+.stub::before,.stub::after{content:"";position:absolute;top:110px;width:16px;height:16px;border-radius:50%;background:var(--bg)}
+.stub::before{left:-8px}
+.stub::after{right:-8px}
+.stub .t{display:grid;grid-template-columns:60px 1fr;gap:14px;padding-bottom:14px;border-bottom:2px dashed #CDC4B1}
+.stub .t .poster{border-radius:8px}
+.stub h4{margin:0 0 5px;font-size:19px;font-weight:800}
+.stub .m{font-size:12.5px;color:#6E6A60;line-height:1.5}
+.stub .b{display:flex;justify-content:space-between;align-items:center;padding-top:10px}
+.stars{display:flex;gap:2px}
+.stars button{width:30px;height:30px;display:grid;place-items:center;color:#B8892A}
+.stars button:focus-visible{outline-color:#1B1B24}
+.stub .again{font-size:13px;font-weight:700;color:#1B1B24;padding:8px 12px;border-radius:10px;border:1px solid #CDC4B1}
+.stub .again:focus-visible{outline-color:#1B1B24}
+
+/* auth */
+.auth{padding:6px 24px 0;position:relative}
+.auth .sunb{position:absolute;right:-70px;top:-40px;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#FFE3A6,#EDAA3B 55%,#D2512F);opacity:.9;box-shadow:0 0 0 22px rgba(237,170,59,.09),0 0 0 48px rgba(237,170,59,.05)}
+.auth .logo{position:relative;margin-bottom:56px}
+.auth h2{font-size:36px;font-weight:800;line-height:1;position:relative}
+.auth .sub{margin:8px 0 20px;color:var(--muted);font-size:15px;line-height:1.45;position:relative;max-width:26ch}
+.field{margin-top:12px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.inp{display:flex;align-items:center;gap:10px;height:52px;padding:0 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.inp:focus-within{border-color:var(--gold)}
+.inp input{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;font-size:15px;color:var(--text)}
+.inp input:focus-visible{outline:none}
+.two2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:rgba(210,81,47,.13);color:#F09479;font-size:13.5px;line-height:1.4}
+.auth .btn.gold{width:100%;height:52px;margin-top:20px}
+.auth .alt{display:flex;justify-content:center;gap:6px;margin-top:18px;font-size:14px;color:var(--muted)}
+.auth .alt button{color:var(--gold);font-weight:700}
+.auth .fg{display:block;margin:12px 0 0 auto;font-size:13px;color:var(--gold);font-weight:700}
+
+/* overlays */
+.scrim{position:absolute;inset:0;background:rgba(6,6,10,.72);z-index:50;backdrop-filter:blur(2px)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:74px;z-index:60;background:var(--surface);border-radius:28px 28px 0 0;display:flex;flex-direction:column}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:10px auto 0;flex:none}
+.sheet .sb{flex:1;overflow-y:auto;scrollbar-width:none;padding:14px 20px 8px}
+.sheet .sb::-webkit-scrollbar{display:none}
+.sheet h3{font-size:22px;font-weight:800}
+.sheet p{margin:6px 0 0;font-size:14px;color:var(--muted);line-height:1.45}
+.crop{position:relative;width:148px;height:148px;margin:18px auto 16px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);box-shadow:0 10px 34px rgba(0,0,0,.45)}
+.photo{position:absolute;inset:0;background:radial-gradient(circle at 70% 26%,#FFE7B0 0 9%,transparent 10%),linear-gradient(180deg,#F4C25E 0%,#E58F2B 46%,#5A2B3F 100%)}
+.photo::before{content:"";position:absolute;left:50%;top:30%;width:34%;aspect-ratio:1;border-radius:50%;background:#1B1B2A;transform:translateX(-50%)}
+.photo::after{content:"";position:absolute;left:50%;top:60%;width:76%;height:80%;border-radius:50%;background:#1B1B2A;transform:translateX(-50%)}
+.mseg{display:flex;padding:4px;border-radius:12px;background:var(--bg)}
+.mseg button{flex:1;padding:9px 0;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--muted);text-align:center!important}
+.mseg button.on{background:var(--gold);color:var(--gold-ink);font-weight:700}
+.file{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border:1.5px dashed var(--line);border-radius:14px;font-size:14px;background:var(--bg);width:100%}
+.file .ic{color:var(--gold)}
+.file small{display:block;color:var(--muted);font-size:12px}
+.urlin{width:100%;margin-top:14px;height:48px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-size:14px}
+.urlin::placeholder{color:var(--muted);opacity:.7}
+.sl{margin-top:14px}
+.sl .h{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.sl .h b{color:var(--text);font-weight:500}
+.sl input{width:100%;accent-color:var(--gold);margin:0}
+.sheet .foot{flex:none;padding:12px 20px 30px;display:grid;gap:10px;border-top:1px solid var(--line);background:var(--surface)}
+.sheet .foot .r{display:flex;gap:10px}
+.sheet .foot .btn{flex:1;height:46px}
+.link{display:flex;align-items:center;justify-content:center;gap:8px;color:#F09479;font-size:14px;font-weight:700;padding:6px 0}
+.reset{margin-top:14px;width:100%;height:40px;font-size:13px}
+.drawer{position:absolute;left:0;top:0;bottom:0;width:84%;z-index:60;background:#14141C;border-right:1px solid var(--line);box-shadow:14px 0 40px rgba(0,0,0,.55);padding-top:46px;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--surface);border-bottom:1px solid var(--line)}
+.dme{display:flex;align-items:center;gap:12px;padding:16px 20px 8px}
+.dme .avatar{width:46px;height:46px;font-size:17px;box-shadow:none}
+.dme b{display:block;font-size:15.5px}
+.dme small{color:#E4A872;font-size:12.5px;font-weight:700}
+.dsign{margin:14px 16px 4px;display:flex;gap:10px}
+.dsign .btn{flex:1;height:42px;font-size:14px}
+.dl{padding:6px 12px;display:grid;gap:2px}
+.dl button{display:flex;align-items:center;gap:14px;padding:0 12px;height:44px;border-radius:11px;font-size:15px;color:var(--text)}
+.dl button svg{color:var(--muted)}
+.dl button.on{background:rgba(237,170,59,.12);color:var(--gold)}
+.dl button.on svg{color:var(--gold)}
+.dlab{padding:14px 24px 4px;font-size:12.5px;color:var(--muted);font-weight:500}
+.dfoot{margin-top:auto;padding:14px 20px 30px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--muted)}
+
+
+/* trophies */
+.medal{display:block;flex:none}
+.tcase{display:flex;align-items:center;gap:14px;margin:16px 20px 0;padding:12px 16px 12px 12px;border-radius:18px;background:var(--surface);width:calc(100% - 40px)}
+.tmed{display:flex}
+.tmed .medal{margin-left:-14px;border-radius:50%;background:var(--surface)}
+.tmed .medal:first-child{margin-left:0}
+.tcase b{display:block;font-size:15px}
+.tcase small{color:var(--muted);font-size:13px}
+.thero{margin:6px 20px 0;padding:20px;border-radius:24px;display:flex;align-items:center;gap:18px;background:radial-gradient(circle at 88% 0%,rgba(237,170,59,.3),transparent 55%),var(--surface);border:1px solid var(--line)}
+.ring{position:relative;width:92px;height:92px;flex:none}
+.ring svg{position:absolute;inset:0}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800}
+.thero h3{font-size:21px;font-weight:800;line-height:1.1}
+.thero p{margin:6px 0 0;font-size:13.5px;color:var(--muted);line-height:1.45}
+.tnext{margin:12px 20px 0;padding:16px;border-radius:20px;background:var(--surface);display:grid;grid-template-columns:56px 1fr;gap:4px 14px;align-items:center}
+.tnext .l{font-size:12px;font-weight:700;color:var(--gold)}
+.tnext b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:800}
+.tnext .nx{font-size:12.5px;color:var(--muted)}
+.tnext .btn{grid-column:1/-1;height:42px;font-size:14px;margin-top:10px}
+.pbar{height:8px;border-radius:5px;background:var(--surface2);overflow:hidden;margin:8px 0 6px}
+.pbar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#EDAA3B,#F4C25E)}
+.tcat{display:flex;justify-content:space-between;align-items:baseline;padding:24px 20px 10px}
+.tcat h3{font-size:18px;font-weight:800}
+.tcat small{font-size:12.5px;color:var(--muted)}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 20px}
+.tcell{display:flex;flex-direction:column;align-items:center;text-align:center!important;gap:7px;padding:14px 6px 12px;border-radius:16px;background:var(--surface)}
+.tcell.done{background:linear-gradient(180deg,rgba(237,170,59,.12),var(--surface))}
+.tcell b{font-size:12.5px;font-weight:700;line-height:1.2;min-height:30px;display:flex;align-items:center}
+.tcell small{font-size:11.5px;color:var(--muted)}
+.tcell.done small{color:var(--gold);font-weight:700}
+.tp{display:inline-block;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700}
+.tp.bronze{color:#E4A872;background:rgba(205,127,50,.16)}
+.tp.silver{color:#D5D8EA;background:rgba(200,204,224,.14)}
+.tp.gold{color:#F4C25E;background:rgba(237,170,59,.16)}
+.tp.platinum{color:#A8E6F0;background:rgba(143,211,232,.15)}
+.tsheet{position:absolute;left:0;right:0;bottom:0;z-index:60;background:var(--surface);border-radius:28px 28px 0 0;padding:0 24px 34px;text-align:center}
+.tsheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:10px auto 0}
+.tbig{position:relative;width:150px;height:150px;margin:20px auto 12px}
+.tbig.done::before{content:"";position:absolute;inset:-26px;border-radius:50%;background:radial-gradient(circle,rgba(237,170,59,.38),transparent 66%)}
+.tbig .medal{position:relative}
+.tsheet h3{font-size:27px;font-weight:800;margin-top:10px}
+.tsheet p{margin:6px 0 0;font-size:15px;color:var(--muted);line-height:1.45}
+.tstate{margin-top:18px;padding:13px 14px;border-radius:14px;background:var(--bg);text-align:left}
+.tstate .pr{display:flex;justify-content:space-between;font-size:14px}
+.tstate .pr span{color:var(--gold);font-weight:700}
+.tstate.ok{display:flex;gap:10px;align-items:center;color:#8EDDB9;font-weight:700;font-size:14px}
+.tsheet .btn{width:100%;margin-top:14px}
+.tsheet .link{color:var(--muted);margin-top:4px;width:100%}
+.cel{position:absolute;inset:0;z-index:70;display:grid;place-items:center;background:radial-gradient(circle at 50% 36%,rgba(237,170,59,.38),rgba(6,6,10,.95) 62%);padding:24px;text-align:center}
+.cel .in{position:relative;display:flex;flex-direction:column;align-items:center;width:100%}
+.medalwrap{position:relative;width:170px;height:170px;display:grid;place-items:center;animation:pop .75s cubic-bezier(.2,1.3,.4,1) both}
+.rays{position:absolute;inset:-96px;border-radius:50%;background:repeating-conic-gradient(rgba(237,170,59,.3) 0 7deg,transparent 7deg 22deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 68%);mask:radial-gradient(circle,#000 20%,transparent 68%);animation:spin 20s linear infinite}
+.medalwrap .medal{position:relative}
+.cel .k{margin-top:26px;font-size:13px;font-weight:700;color:var(--gold)}
+.cel h2{font-size:36px;font-weight:800;margin:6px 0 8px;line-height:1}
+.cel p{margin:0;color:#CFCBDD;font-size:15px;line-height:1.45;max-width:26ch}
+.cel .more{margin-top:10px;font-size:13.5px;color:var(--gold);font-weight:700}
+.cel .btns{margin-top:28px;display:grid;gap:10px;width:100%;max-width:280px}
+@keyframes pop{0%{transform:scale(.3) rotate(-14deg);opacity:0}60%{transform:scale(1.12) rotate(3deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.medalwrap,.rays{animation:none!important}}
+
+@media (max-width:480px){
+  .page{padding:24px 0 56px}
+  .page h1,.page p.lead,.panel{padding:0 20px}
+  .stage{gap:32px}
+  .panel{width:100%;position:static}
+  .ph{width:100%;max-width:375px;border-radius:0;padding:0;background:none;box-shadow:none}
+  .scr{border-radius:28px}
+  .status .notch{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Savannah Cinemas app prototype</h1>
+  <p class="lead">One connected prototype of the mobile app. The tab bar, menu, booking flow, sign-in and profile all work together, so you can go from finding a film to holding a ticket, seeing it in your bookings, and unlocking trophies along the way.</p>
+  <div class="stage">
+    <div class="ph" id="phone"><div class="scr" id="scr"></div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
+    <aside class="panel" aria-label="Prototype guide">
+      <h2>Try this path</h2>
+      <p>Sign in, tap Harmattan on Home, pick a time, choose seats and pay. That fifth booking unlocks the Regular trophy. Rating The Last Drummer in Watch history earns Critic.</p>
+      <h3>Jump to a screen</h3>
+      <div class="jg">
+        <button class="jb" data-j="home">Home</button><button class="jb" data-j="detail">Film details</button><button class="jb" data-j="seats">Seats</button><button class="jb" data-j="ticket">Ticket</button><button class="jb" data-j="cinemas">Cinemas</button><button class="jb" data-j="offers">Offers</button>
+      </div>
+      <h3>Account</h3>
+      <div class="jg">
+        <button class="jb" data-j="signin">Sign in</button><button class="jb" data-j="register">Create account</button><button class="jb" data-j="profile">Bookings</button><button class="jb" data-j="watchlist">Watchlist</button><button class="jb" data-j="settings">Settings</button><button class="jb" data-j="history">Watch history</button><button class="jb" data-j="photo">Change photo</button><button class="jb" data-j="new">New account</button><button class="jb" data-j="menu">Menu</button>
+      </div>
+      <h3>Trophies</h3>
+      <div class="jg">
+        <button class="jb" data-j="trophies">Trophy case</button><button class="jb" data-j="tdetail">Trophy detail</button><button class="jb" data-j="celebrate">Unlock moment</button><button class="jb" data-j="tnew">New account</button>
+      </div>
+      <button class="jb reset" data-j="reset">Reset prototype</button>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* ================= data ================= */
+const P='';
+const FILMS={
+  harm:{t:'Harmattan',g:'Drama',c:['#2A1608','#E0892E','#FBD283'],m:'sun',r:'8.4',min:128,age:'PG-13',dir:'Ama Boateng',cast:'Kojo Mensah, Efua Danso',syn:'A dust-laden season descends on Accra as a retired highlife guitarist searches the city for the daughter he lost touch with, and the song that ties them together.'},
+  drum:{t:'The Last Drummer',g:'Adventure',c:['#0C2F2E','#2F9E78','#B8F0D3'],m:'arch',r:'8.1',min:114,age:'PG',dir:'Yaw Ofori',cast:'Nana Adjei, Abena Tetteh',syn:'A village drummer walks to Accra with his family\'s last talking drum, hoping a master can repair it before the harvest festival begins.'},
+  midn:{t:'Accra Midnight',g:'Thriller',c:['#251044','#C9462F','#FFB27A'],m:'glow',r:'7.9',min:121,age:'16+',dir:'Selina Quaye',cast:'Kwesi Amoah, Ivy Darko',syn:'A night-shift taxi driver picks up a passenger who knows every detail of a robbery that has not happened yet.'},
+  volt:{t:'Volta',g:'Sci-fi',c:['#0A2140','#3C92CF','#BFE6FF'],m:'bands',r:'8.6',min:144,age:'PG-13',dir:'Kofi Mensimah',cast:'Adwoa Sarpong, Yaw Bonsu',syn:'Engineers at the Akosombo dam discover the river is sending a signal, and they have four days to answer it.'},
+  kent:{t:'Kente Kings',g:'Comedy',c:['#3B2A08','#D9A21E','#FFF0B8'],m:'bands',r:'7.6',min:107,age:'PG',dir:'Esi Ankrah',cast:'Papa Owusu, Lydia Nyarko',syn:'Three rival weavers in Bonwire must share a single loom to win the festival contract that could save their workshops.'},
+  red:{t:'Red Earth',g:'Drama',c:['#3A1010','#B23A25','#F5A88A'],m:'arch',r:'',min:132,age:'PG-13',opens:'Fri 16 Oct',dir:'Mercy Addo',cast:'Kojo Mensah, Rita Ofosu',syn:'Two brothers return to the family cocoa farm to settle an inheritance neither of them expected to share.'},
+  lag:{t:'Lagoon',g:'Mystery',c:['#0B2A33','#1F7E8C','#9FE3E8'],m:'sun',r:'',min:118,age:'16+',opens:'Fri 30 Oct',dir:'Kweku Danful',cast:'Ivy Darko, Nii Lamptey',syn:'A marine biologist in Keta finds a message in a fishing net that points to a boat lost thirty years ago.'}
+};
+const NOW=['harm','drum','midn','volt','kent'], SOON=['red','lag'];
+const DATES=[['Wed',30,'Sep'],['Thu',1,'Oct'],['Fri',2,'Oct'],['Sat',3,'Oct'],['Sun',4,'Oct']];
+const dLabel=i=>`${DATES[i][0]} ${DATES[i][1]} ${DATES[i][2]}`;
+const SHOWS=[{fmt:'IMAX',t:['4:30 PM','7:45 PM','10:50 PM']},{fmt:'Dolby Atmos',t:['2:15 PM','5:15 PM','8:30 PM']},{fmt:'VIP recliners',t:['6:00 PM','9:15 PM']}];
+const PRICE={'IMAX':85,'Dolby Atmos':75,'VIP recliners':120};
+const HALL={'IMAX':'IMAX 1','Dolby Atmos':'Screen 4','VIP recliners':'VIP 2'};
+const ROWS='ABCDEFGH'.split(''), VIPROWS=['G','H'], VIPADD=35;
+const TAKEN=new Set(['B3','B4','C6','C7','D2','D9','E4','E5','E6','F8','F9','G1','G2','H5','H6','H7','A5','A6']);
+const CINEMAS=[
+ ['Savannah Accra Mall','Tetteh Quarshie Interchange, Accra','2.4 km',['IMAX','Dolby Atmos','VIP'],'Open until 11:30 PM','14 films today'],
+ ['Savannah West Hills','Weija, Accra','9.8 km',['Dolby Atmos','VIP'],'Open until 11:00 PM','11 films today'],
+ ['Savannah Achimota','Achimota Retail Centre, Accra','12.1 km',['Dolby Atmos'],'Open until 10:30 PM','9 films today'],
+ ['Savannah Kumasi City Mall','Santasi, Kumasi','247 km',['IMAX','VIP'],'Open until 11:00 PM','12 films today']
+];
+const SEED=[
+ {id:'b1',k:'volt',ds:'Fri 2 Oct',t:'9:15 PM',fmt:'IMAX',branch:'Savannah Accra Mall',seats:'H4, H5',ref:'SVN-9M2XD',s:'up',total:170,mon:'October 2026'},
+ {id:'b2',k:'kent',ds:'Fri 21 Aug',t:'8:00 PM',fmt:'Dolby Atmos',branch:'Savannah West Hills',seats:'D6',ref:'SVN-3T8LB',s:'past',total:65,mon:'August 2026',rate:4},
+ {id:'b3',k:'harm',ds:'Sun 9 Aug',t:'4:15 PM',fmt:'IMAX',branch:'Savannah Accra Mall',seats:'C3, C4',ref:'SVN-7R5VC',s:'can',total:0,mon:'August 2026'},
+ {id:'b4',k:'midn',ds:'Sat 25 Jul',t:'9:00 PM',fmt:'Dolby Atmos',branch:'Savannah West Hills',seats:'E5, E6',ref:'SVN-2H6PA',s:'past',total:130,mon:'July 2026',rate:5},
+ {id:'b5',k:'drum',ds:'Sat 13 Jun',t:'3:30 PM',fmt:'Dolby Atmos',branch:'Savannah Achimota',seats:'C3, C4',ref:'SVN-5N8QZ',s:'past',total:130,mon:'June 2026',rate:0}
+];
+const stLabel={up:'Upcoming',past:'Past',can:'Cancelled'};
+
+/* ================= state ================= */
+const fresh=()=>({
+  screen:'home',stack:[],tab:'bookings',mode:'signin',user:null,watch:[],bookings:[],tg:{remind:true,offers:false},
+  photo:null,crop:{z:100,x:0,y:0},sheet:false,sheetTab:'up',drawer:false,
+  film:'harm',dateIdx:0,time:{fmt:'IMAX',t:'7:45 PM'},seats:new Set(['F5','F6']),last:null,
+  next:null,earned:{},celebrate:[],tdetail:null,tf:'All',q:'',cinF:'Nearest',hf:'All',form:{email:'kwame.asante@example.com',pw:'password1',fn:'',sn:'',ph:''},err:'',showPw:false
+});
+let S=fresh();
+const KWAME={name:'Kwame Asante',ini:'KA',email:'kwame.asante@example.com',phone:'+233 24 555 0142'};
+function signInKwame(email){S.user={...KWAME,email:email||KWAME.email};S.bookings=structuredClone(SEED);S.watch=['volt','drum','midn','red'];S.earned={first:'Jun 13',datenight:'Jun 13',genre:'Aug 21',planner:'Sep 2',explorer:'Sep 20',bigscreen:'Sep 20',owl:'Sep 20'};}
+
+/* ================= helpers ================= */
+const root=document.getElementById('scr'), phone=document.getElementById('phone');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const I={
+  film:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+  pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  ticket:'<path d="M3 8a2 2 0 0 1 0 8v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 1 0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 5v14" stroke-dasharray="2 2.5"/>',
+  tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.2"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/>',
+  bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
+  bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  chev:'<path d="M9 6l6 6-6 6"/>',
+  back:'<path d="M15 6l-6 6 6 6"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  share:'<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7h14v-7"/>',
+  wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.5 4.5l2.1 2.1M17.4 17.4l2.1 2.1M2.5 12h3M18.5 12h3M4.5 19.5l2.1-2.1M17.4 6.6l2.1-2.1"/>',
+  logout:'<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M16 8l4 4-4 4M20 12H9"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A15 15 0 0 1 4 5a1 1 0 0 1 1-1z"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  chair:'<path d="M6 11V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5"/><path d="M4 11h16v5H4zM7 16v4M17 16v4"/>',
+  history:'<path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/><path d="M12 8v4l3 2"/>',
+  lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
+  eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff:'<path d="M3 3l18 18M10 6.2A9.7 9.7 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.7M6.3 7.6A17 17 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1"/>'
+};
+Object.assign(I,{
+  trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v2a3 3 0 0 0 4 2.8M16 6h4v2a3 3 0 0 1-4 2.8M12 13v4M8 20h8M10 17h4"/>',
+  moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  crown:'<path d="M4 8l4 4 4-6 4 6 4-4-2 10H6z"/>',
+  layers:'<path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/>',
+  gem:'<path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9 4l3 5 3-5"/>',
+  pen:'<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/>',
+  screen:'<rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/>'
+});
+const ic=(n,s=20)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const starF=(on,s=20)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="${on?'currentColor':'none'}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">${I.star}</svg>`;
+const starMini=`<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">${I.star}</svg>`;
+const poster=(k,x='')=>{const f=FILMS[k];return `<div class="poster ${f.m} ${x}" style="--a:${f.c[0]};--b:${f.c[1]};--c:${f.c[2]}"><span class="pt">${f.t}</span></div>`};
+const status=`<div class="status"><span>9:41</span><span class="notch"></span><svg width="66" height="12" viewBox="0 0 66 12" fill="currentColor" aria-hidden="true"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/><path d="M28 3.2a9 9 0 0 1 12 0M30.4 6a5.6 5.6 0 0 1 7.2 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="34" cy="9.6" r="1.4"/><rect x="45" y="1" width="19" height="10" rx="3" fill="none" stroke="currentColor" stroke-opacity=".5"/><rect x="46.6" y="2.6" width="14" height="6.8" rx="1.8"/></svg></div>`;
+const tabbar=on=>`<nav class="tabsbar" aria-label="Main">${[['film','Films'],['pin','Cinemas'],['ticket','Tickets'],['tag','Offers'],['user','Account']].map(([i,l])=>`<button class="tab ${on===l?'on':''}" data-a="nav" data-v="${l}" ${on===l?'aria-current="page"':''}>${ic(i,24)}<span>${l}</span></button>`).join('')}</nav>`;
+const avatar=()=>`<div class="avatar">${S.photo?`<div class="photo" style="transform:translate(${S.photo.x*.4}%,${S.photo.y*.4}%) scale(${S.photo.z/100})"></div>`:S.user.ini}</div>`;
+const spent=()=>S.bookings.filter(b=>b.s!=='can').reduce((t,b)=>t+b.total,0);
+const seatPrice=id=>PRICE[S.time.fmt]+(VIPROWS.includes(id[0])?VIPADD:0);
+const mins=m=>`${Math.floor(m/60)}h ${m%60}m`;
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
+
+/* ================= navigation ================= */
+const MAIN=['home','cinemas','offers','profile','login'];
+function go(s){ if(MAIN.includes(s)) S.stack=[]; else if(S.screen!=='login') S.stack.push(S.screen); S.screen=s;S.drawer=false;S.sheet=false;S.tdetail=null;S.err='';render(true) }
+function back(){ const p=S.stack.pop(); S.screen=p||(S.screen==='history'||S.screen==='trophies'?'profile':'home');S.tdetail=null; S.drawer=false; render(true) }
+function requireAuth(fn){ if(S.user){fn();return} S.next=fn;S.mode='signin';S.err='';go('login') }
+function nav(v){
+  if(v==='Films') go('home');
+  else if(v==='Cinemas') go('cinemas');
+  else if(v==='Offers') go('offers');
+  else if(v==='Tickets') requireAuth(()=>{S.tab='bookings';go('profile')});
+  else requireAuth(()=>go('profile'));
+}
+function openFilm(k){S.film=k;go('detail')}
+function toggleWatch(k){
+  const from=S.screen;
+  requireAuth(()=>{
+    const i=S.watch.indexOf(k);
+    if(i>=0){S.watch.splice(i,1);toast('Removed from watchlist')}else{S.watch.push(k);toast(FILMS[k].r?'Saved to watchlist':'We\'ll remind you when it opens')}
+    const fr=syncTrophies();if(fr.length)S.celebrate=fr;
+    if(S.screen==='login'){S.screen=from;render(true)}else render(false);
+  });
+}
+function pay(){
+  const sel=[...S.seats].sort(); if(!sel.length) return;
+  const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let r='SVN-';for(let i=0;i<5;i++)r+=chars[Math.floor(Math.random()*chars.length)];
+  const b={id:'n'+Date.now(),k:S.film,ds:dLabel(S.dateIdx),t:S.time.t,fmt:S.time.fmt,branch:'Savannah Accra Mall',seats:sel.join(', '),ref:r,s:'up',total:sel.reduce((t,i)=>t+seatPrice(i),0),mon:'October 2026',n:sel.length};
+  S.bookings.unshift(b);S.last=b;S.seats=new Set();const fr=syncTrophies();go('ticket');if(fr.length){S.celebrate=fr;render(false)}
+}
+
+/* ================= trophies ================= */
+const act=()=>S.bookings.filter(b=>b.s!=='can'), pastB=()=>S.bookings.filter(b=>b.s==='past');
+const hourOf=t=>{const m=/(\d+):\d+\s*(AM|PM)/.exec(t);if(!m)return 0;let h=+m[1]%12;if(m[2]==='PM')h+=12;return h};
+const cap=x=>x[0].toUpperCase()+x.slice(1);
+const TROPHIES=[
+ {id:'first',n:'First Stub',d:'Make your first booking.',tier:'bronze',ic:'ticket',cat:'Getting started',goal:1,unit:'booking',have:()=>act().length,cta:['Browse films','home']},
+ {id:'planner',n:'Planner',d:'Save 3 films to your watchlist.',tier:'bronze',ic:'bookmark',cat:'Getting started',goal:3,unit:'films saved',have:()=>S.watch.length,cta:['Browse films','home']},
+ {id:'critic',n:'Critic',d:'Rate 3 films in your watch history.',tier:'bronze',ic:'pen',cat:'Getting started',goal:3,unit:'films rated',have:()=>pastB().filter(b=>b.rate>0).length,cta:['Open watch history','history']},
+ {id:'bigscreen',n:'Big Screen',d:'See a film in IMAX.',tier:'silver',ic:'screen',cat:'On screen',goal:1,unit:'IMAX booking',have:()=>act().filter(b=>b.fmt==='IMAX').length,cta:['See IMAX cinemas','cinemas']},
+ {id:'datenight',n:'Date Night',d:'Book two or more seats together.',tier:'silver',ic:'heart',cat:'On screen',goal:1,unit:'booking with 2+ seats',have:()=>act().filter(b=>b.seats.split(',').length>=2).length,cta:['Browse films','home']},
+ {id:'owl',n:'Night Owl',d:'Book a show that starts at 9 PM or later.',tier:'silver',ic:'moon',cat:'On screen',goal:1,unit:'late show',have:()=>act().filter(b=>hourOf(b.t)>=21).length,cta:['Browse films','home']},
+ {id:'genre',n:'Genre Hopper',d:'Watch films from 3 different genres.',tier:'silver',ic:'layers',cat:'On screen',goal:3,unit:'genres',have:()=>new Set(pastB().map(b=>FILMS[b.k].g)).size,cta:['Browse films','home']},
+ {id:'explorer',n:'Cinema Explorer',d:'Book at 3 different Savannah cinemas.',tier:'silver',ic:'compass',cat:'On screen',goal:3,unit:'cinemas',have:()=>new Set(act().map(b=>b.branch)).size,cta:['See cinemas','cinemas']},
+ {id:'regular',n:'Regular',d:'Make 5 bookings.',tier:'gold',ic:'chair',cat:'Milestones',goal:5,unit:'bookings',have:()=>act().length,cta:['Book a film','home']},
+ {id:'cinephile',n:'Cinephile',d:'Watch 10 films.',tier:'gold',ic:'film',cat:'Milestones',goal:10,unit:'films watched',have:()=>pastB().length,cta:['Book a film','home']},
+ {id:'silverscreen',n:'Silver Screen',d:'Earn 1,000 points.',tier:'gold',ic:'gem',cat:'Milestones',goal:1000,unit:'points',have:()=>spent(),cta:['See offers','offers']},
+ {id:'legend',n:'Savannah Legend',d:'Unlock every other trophy.',tier:'platinum',ic:'crown',cat:'Milestones',goal:0,unit:'trophies',have:()=>0,cta:['Browse films','home']}
+];
+function tInfo(t){
+  let goal=t.goal,have;
+  if(t.id==='legend'){const o=TROPHIES.filter(x=>x.id!=='legend');goal=o.length;have=o.filter(x=>tInfo(x).done).length}
+  else have=t.have();
+  const done=!!S.earned[t.id]||have>=goal;
+  if(done)have=goal;
+  return {have,goal,done,pct:goal?have/goal:0,st:done?'done':have>0?'prog':'lock'};
+}
+function syncTrophies(){const fresh=[];TROPHIES.forEach(t=>{if(!S.earned[t.id]&&tInfo(t).done){S.earned[t.id]='Today';fresh.push(t.id)}});return fresh}
+const pText=(t,i)=>`${i.have.toLocaleString('en-US')} of ${i.goal.toLocaleString('en-US')} ${t.unit}`;
+const DEFS=`<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<linearGradient id="g-bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F3BE8A"/><stop offset="1" stop-color="#A8581F"/></linearGradient>
+<linearGradient id="g-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6F6FB"/><stop offset="1" stop-color="#8E92AA"/></linearGradient>
+<linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE394"/><stop offset="1" stop-color="#D4901A"/></linearGradient>
+<linearGradient id="g-platinum" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7FCFF"/><stop offset=".55" stop-color="#8FD3E8"/><stop offset="1" stop-color="#B7A4F4"/></linearGradient></defs></svg>`;
+function medal(t,size=64){
+  const i=tInfo(t),done=i.st==='done';
+  const ring=i.st==='prog'?`<circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3"/><circle cx="32" cy="32" r="30" fill="none" stroke="#EDAA3B" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(i.pct*188.5).toFixed(1)} 188.5" transform="rotate(-90 32 32)"/>`:'';
+  return `<svg class="medal" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true">${ring}<circle cx="32" cy="32" r="26" fill="${done?`url(#g-${t.tier})`:'#242434'}" ${done?'':'stroke="#353549" stroke-width="1.5"'}/>${done?'<circle cx="32" cy="32" r="21" fill="none" stroke="rgba(27,18,4,.35)" stroke-width="1.5"/>':''}<g transform="translate(20 20)" fill="none" stroke="${done?'#1B1204':'#6E6C80'}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${I[t.ic]}</g></svg>`;
+}
+function tcase(){
+  const done=TROPHIES.filter(t=>tInfo(t).done).length,ids=Object.keys(S.earned).slice(-4);
+  const show=(ids.length?ids:TROPHIES.slice(0,3).map(t=>t.id)).map(id=>TROPHIES.find(t=>t.id===id));
+  return `<button class="tcase" data-a="trophies"><span class="tmed">${show.map(t=>medal(t,44)).join('')}</span><span style="flex:1"><b>Trophy case</b><small>${done} of ${TROPHIES.length} unlocked</small></span>${ic('chev',18)}</button>`;
+}
+function screenTrophies(){
+  const all=TROPHIES.map(t=>({t,i:tInfo(t)})),done=all.filter(x=>x.i.done).length,total=all.length,dash=(done/total*251.3).toFixed(1);
+  const next=all.filter(x=>x.i.st==='prog'&&x.t.id!=='legend').sort((a,b)=>b.i.pct-a.i.pct)[0]||all.find(x=>x.i.st==='lock'&&x.t.id!=='legend');
+  const fmap={All:null,Unlocked:'done','In progress':'prog',Locked:'lock'};
+  const cats=['Getting started','On screen','Milestones'];
+  const cell=({t,i})=>{const sub=i.st==='done'?'Unlocked':i.st==='prog'?`${i.have.toLocaleString('en-US')}/${i.goal.toLocaleString('en-US')}`:'Locked';return `<button class="tcell ${i.st}" data-a="tdetail" data-v="${t.id}" aria-label="${t.n}, ${sub}">${medal(t,64)}<b>${t.n}</b><small>${sub}</small></button>`};
+  let secs=cats.map(c=>{const inCat=all.filter(x=>x.t.cat===c),list=inCat.filter(x=>!fmap[S.tf]||x.i.st===fmap[S.tf]);return list.length?`<div class="tcat"><h3 class="disp">${c}</h3><small>${inCat.filter(x=>x.i.done).length} of ${inCat.length}</small></div><div class="tgrid">${list.map(cell).join('')}</div>`:''}).join('');
+  if(!secs)secs=`<div class="empty" style="padding-top:30px"><div class="ico">${ic('trophy',34)}</div><h3 class="disp">Nothing here yet</h3><p>Try a different filter to see the rest of your collection.</p></div>`;
+  return {tab:'Account',body:`
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="round" data-a="back" aria-label="Back">${ic('back',22)}</button><h2 class="disp">My trophies</h2></div></div>
+  <div class="thero"><div class="ring"><svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="40" fill="none" stroke="#292939" stroke-width="8"/><circle cx="46" cy="46" r="40" fill="none" stroke="#EDAA3B" stroke-width="8" stroke-linecap="round" stroke-dasharray="${dash} 251.3" transform="rotate(-90 46 46)"/></svg><b>${done}</b></div>
+    <div><h3 class="disp">${done} of ${total} unlocked</h3><p>${done===0?'Book a film to earn your first trophy.':done===total?'Every trophy is yours. Well watched.':`Bronze member, ${spent().toLocaleString('en-US')} points. Keep watching to fill the case.`}</p></div></div>
+  ${next?`<div class="tnext">${medal(next.t,56)}<div><div class="l">Next up</div><b>${next.t.n}</b></div><div style="grid-column:1/-1"><div class="pbar"><i style="width:${next.i.pct*100}%"></i></div><div class="nx">${pText(next.t,next.i)}</div></div><button class="btn gold" data-a="tcta" data-v="${next.t.cta[1]}">${next.t.cta[0]}</button></div>`:''}
+  <div class="chips" style="margin-top:20px">${Object.keys(fmap).map(c=>`<button class="chip ${S.tf===c?'on':''}" data-a="tf" data-v="${c}" aria-pressed="${S.tf===c}">${c}</button>`).join('')}</div>
+  ${secs}`};
+}
+function tSheet(id){
+  const t=TROPHIES.find(x=>x.id===id),i=tInfo(t);
+  return `<div class="scrim" data-a="closeT"></div><div class="tsheet" role="dialog" aria-modal="true" aria-label="${t.n}"><div class="grab"></div>
+  <div class="tbig ${i.st}">${medal(t,150)}</div><span class="tp ${t.tier}">${cap(t.tier)} trophy</span>
+  <h3 class="disp">${t.n}</h3><p>${t.d}</p>
+  ${i.done?`<div class="tstate ok">${ic('check',18)}<span>Unlocked ${S.earned[t.id]==='Today'?'today':'on '+S.earned[t.id]}</span></div><button class="btn gold" data-a="soon" data-v="Sharing a trophy">${ic('share',18)}Share trophy</button>`
+    :`<div class="tstate"><div class="pr"><b>${pText(t,i)}</b><span>${Math.round(i.pct*100)}%</span></div><div class="pbar"><i style="width:${i.pct*100}%"></i></div></div><button class="btn gold" data-a="tcta" data-v="${t.cta[1]}">${t.cta[0]}</button>`}
+  <button class="link" data-a="closeT">Close</button></div>`;
+}
+function celebHTML(){
+  const ids=S.celebrate,t=TROPHIES.find(x=>x.id===ids[0]);
+  return `<div class="cel" role="dialog" aria-modal="true" aria-label="Trophy unlocked"><div class="in"><div class="medalwrap"><div class="rays"></div>${medal(t,150)}</div>
+  <div class="k">Trophy unlocked</div><h2 class="disp">${t.n}</h2><p>${t.d}</p>${ids.length>1?`<div class="more">+ ${ids.length-1} more ${ids.length===2?'trophy':'trophies'} unlocked</div>`:''}
+  <div class="btns"><button class="btn gold" data-a="celebView">${ic('trophy',18)}View trophies</button><button class="btn out" data-a="closeCeleb">Continue</button></div></div></div>`;
+}
+
+/* ================= screens ================= */
+function rowFilm(k){const f=FILMS[k];return `<button class="fr" data-a="film" data-v="${k}"><div>${poster(k,'nopt')}</div><div><b>${f.t}</b><small>${f.g}, ${mins(f.min)}</small><div>${f.r?`<span class="rate">${starMini}${f.r}</span>`:`<span class="rate">Opens ${f.opens}</span>`}</div></div>${ic('chev',18)}</button>`}
+function homeMain(){
+  const q=S.q.trim().toLowerCase();
+  if(q){
+    const res=Object.keys(FILMS).filter(k=>FILMS[k].t.toLowerCase().includes(q)||FILMS[k].g.toLowerCase().includes(q));
+    return res.length?`<div class="sec"><h3>Results</h3></div>${res.map(rowFilm).join('')}`:`<div class="empty"><div class="ico">${ic('search',34)}</div><h3 class="disp">No films found</h3><p>Nothing matches “${esc(S.q)}”. Try a title or a genre like drama.</p></div>`;
+  }
+  const mini=k=>{const f=FILMS[k];return `<button class="mini" data-a="film" data-v="${k}">${poster(k)}<div class="meta"><b>${f.t}</b><span>${f.g}</span>${f.r?` <span class="rate" style="margin-left:6px">${starMini}${f.r}</span>`:''}</div></button>`};
+  const saved=S.watch.includes('harm');
+  return `
+  <div class="hero"><div class="sunb"></div><span class="top-l tag">IMAX</span>
+    <div class="in"><h2 class="disp">Harmattan</h2>
+      <div class="row"><span class="rate">${starMini}8.4</span><span class="tag">Drama</span><span class="tag">2h 08m</span><span class="tag">PG-13</span></div>
+      <div class="btns"><button class="btn gold" data-a="film" data-v="harm">Book tickets</button><button class="btn ghost" data-a="wl" data-v="harm" aria-label="${saved?'Remove from':'Save to'} watchlist" aria-pressed="${saved}">${saved?`<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">${I.bookmark}</svg>`:ic('bookmark',20)}</button></div></div></div>
+  <div class="sec"><h3>Trending</h3></div><div class="hscroll">${['drum','midn','volt','kent'].map(mini).join('')}</div>
+  <div class="sec"><h3>Coming soon</h3></div><div class="hscroll">${SOON.map(mini).join('')}</div>
+  <div class="sec"><h3>Watch it bigger</h3></div>
+  <div class="imax"><div class="rings"></div><h3 class="disp">IMAX and Dolby Atmos</h3><p>Bigger screens, sharper images, deeper sound.</p><button class="btn gold" data-a="go" data-v="cinemas">Find a cinema</button></div>`;
+}
+function screenHome(){
+  return {tab:'Films',body:`
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="round" data-a="menu" aria-label="Open menu">${ic('menu',20)}</button><div class="logo"><i></i>Savannah</div></div>
+    <button class="loc" data-a="soon" data-v="Choosing a home cinema">${ic('pin',16)}Accra Mall${ic('down',14)}</button></div>
+  <label class="search">${ic('search',20)}<input id="q" type="search" placeholder="Search films or genres" value="${esc(S.q)}" aria-label="Search films"></label>
+  <div id="homeMain">${homeMain()}</div>`};
+}
+function screenDetail(){
+  const k=S.film,f=FILMS[k],soon=!f.r,saved=S.watch.includes(k);
+  const times=SHOWS.map((s,i)=>`<div class="fmt ${i?'':'first'}">${s.fmt}</div><div class="times">${s.t.map(t=>{const sold=S.dateIdx===0&&s.fmt==='Dolby Atmos'&&t==='2:15 PM';const on=S.time.fmt===s.fmt&&S.time.t===t;return `<button class="time ${on?'on':''} ${sold?'sold':''}" ${sold?'disabled aria-label="'+t+' sold out"':''} data-a="time" data-fmt="${s.fmt}" data-v="${t}" aria-pressed="${on}">${t}</button>`}).join('')}</div>`).join('');
+  const cta=soon?`<div class="cta"><div class="sum"><small>Opens</small><b>${f.opens}</b></div><button class="btn ${saved?'out':'gold'}" data-a="wl" data-v="${k}">${saved?'Reminder set':'Remind me'}</button></div>`
+    :`<div class="cta"><div class="sum"><small>${S.time.fmt}, ${dLabel(S.dateIdx)}, ${S.time.t}</small><b>From GH₵ ${PRICE[S.time.fmt]}</b></div><button class="btn gold" data-a="go" data-v="seats">Select seats</button></div>`;
+  return {cta,body:`
+  <div class="dhero">${poster(k,'nopt')}<div class="dnav"><button class="round" data-a="back" aria-label="Back">${ic('back',22)}</button><div style="display:flex;gap:10px"><button class="round" data-a="soon" data-v="Sharing" aria-label="Share">${ic('share',20)}</button><button class="round" data-a="wl" data-v="${k}" aria-label="${saved?'Remove from':'Save to'} watchlist" aria-pressed="${saved}">${saved?`<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">${I.bookmark}</svg>`:ic('bookmark',20)}</button></div></div></div>
+  <div class="dtitle"><h2 class="disp">${f.t}</h2><div class="facts">${f.r?`<span class="fact" style="color:var(--gold)">${starMini.replace('<svg','<svg fill="currentColor"')}${f.r}</span>`:''}<span class="fact">${ic('clock',15)}${mins(f.min)}</span><span class="fact">${f.age}</span><span class="fact">${f.g}</span></div></div>
+  <p class="syn">${f.syn}</p><div class="cast"><b>Director</b> ${f.dir} &nbsp;&nbsp; <b>Cast</b> ${f.cast}</div>
+  ${soon?`<div class="sec"><h3>Showtimes</h3></div><div class="empty" style="padding-top:10px">Showtimes are added a week before opening. Tap Remind me and we'll let you know.</div>`:`
+  <div class="sec"><h3>Pick a date</h3></div>
+  <div class="dates">${DATES.map((d,i)=>`<button class="date ${S.dateIdx===i?'on':''}" data-a="date" data-v="${i}" aria-pressed="${S.dateIdx===i}"><small>${i===0?'Today':d[0]}</small><b>${d[1]}</b></button>`).join('')}</div>
+  <div class="sec"><h3>Showtimes</h3><button data-a="soon" data-v="Choosing a cinema">Change cinema</button></div>
+  <div class="cin"><header><b>Savannah Accra Mall</b><span>2.4 km away</span></header>${times}</div>`}`,style:'padding-bottom:120px'};
+}
+function screenSeats(){
+  let hall='';
+  ROWS.forEach(r=>{let s=`<div class="srow"><em>${r}</em>`;for(let n=1;n<=10;n++){const id=r+n;const c=['seat'];if(TAKEN.has(id))c.push('taken');else if(VIPROWS.includes(r))c.push('vip');if(S.seats.has(id))c.push('sel');s+=`<button class="${c.join(' ')}" data-a="seat" data-v="${id}" aria-label="Seat ${id}" aria-pressed="${S.seats.has(id)}" ${TAKEN.has(id)?'disabled':''}></button>`;if(n===5)s+='<span class="seat gap"></span>'}hall+=s+`<em>${r}</em></div>`});
+  const sel=[...S.seats].sort(),tot=sel.reduce((t,i)=>t+seatPrice(i),0);
+  return {style:'padding-bottom:130px',cta:`<div class="cta"><div class="sum"><small>${sel.length===1?'1 ticket':sel.length+' tickets'}</small><b>GH₵ ${tot}</b></div><button class="btn gold" data-a="pay" ${sel.length?'':'disabled'}>Continue to pay</button></div>`,body:`
+  <div class="sh"><button class="round" data-a="back" aria-label="Back">${ic('back',22)}</button><div class="t"><h3>${FILMS[S.film].t}</h3><small>${dLabel(S.dateIdx)}, ${S.time.t}, ${HALL[S.time.fmt]}</small></div></div>
+  <div class="screen"><svg viewBox="0 0 300 54" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EDAA3B" stop-opacity=".55"/><stop offset="1" stop-color="#EDAA3B" stop-opacity="0"/></linearGradient></defs><path d="M2 40 Q150 -6 298 40" fill="none" stroke="#EDAA3B" stroke-width="3" stroke-linecap="round"/><path d="M2 40 Q150 -6 298 40 L298 54 L2 54Z" fill="url(#sg)"/></svg></div>
+  <div class="hall"><div class="rows">${hall}</div></div>
+  <div class="legend"><span><i></i>Available</span><span><i class="s"></i>Selected</span><span><i class="t"></i>Taken</span><span><i class="v"></i>VIP row, +GH₵ ${VIPADD}</span></div>
+  <div class="selrow"><div><small>Your seats</small><b>${sel.length?sel.join(', '):'None yet'}</b></div><div style="text-align:right"><small>${S.time.fmt}</small><b>GH₵ ${PRICE[S.time.fmt]}</b></div></div>`};
+}
+function qrSvg(seedStr){
+  let seed=[...seedStr].reduce((a,c)=>a+c.charCodeAt(0),7);const n=21,c=5;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+  const inF=(x,y)=>[[0,0],[n-7,0],[0,n-7]].some(([a,b])=>x>=a&&x<a+7&&y>=b&&y<b+7);let o='';
+  [[0,0],[n-7,0],[0,n-7]].forEach(([a,b])=>{o+=`<rect x="${a*c}" y="${b*c}" width="${7*c}" height="${7*c}" fill="#1B1B24"/><rect x="${(a+1)*c}" y="${(b+1)*c}" width="${5*c}" height="${5*c}" fill="#F2EADB"/><rect x="${(a+2)*c}" y="${(b+2)*c}" width="${3*c}" height="${3*c}" fill="#1B1B24"/>`});
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(inF(x,y))continue;if(rnd()>.52)o+=`<rect x="${x*c}" y="${y*c}" width="${c}" height="${c}" fill="#1B1B24"/>`}
+  return `<svg viewBox="0 0 ${n*c} ${n*c}" role="img" aria-label="Entry QR code" shape-rendering="crispEdges">${o}</svg>`;
+}
+function screenTicket(){
+  const b=S.last,n=b.seats.split(',').length;
+  return {tab:'Tickets',body:`
+  <div class="okhead"><div class="badge">${ic('check',28)}</div><h2 class="disp">You're booked</h2><p>Show this code at the entrance. We've also sent it to your email.</p></div>
+  <div class="ticket"><div class="top2">${poster(b.k,'nopt')}<div><h3 class="disp">${FILMS[b.k].t}</h3><div class="tm">${b.fmt}, ${FILMS[b.k].age}<br>${b.branch}</div></div></div>
+    <div class="grid3"><div><small>Date</small><b>${b.ds}</b></div><div><small>Time</small><b>${b.t}</b></div><div><small>Hall</small><b>${HALL[b.fmt]||'Screen 1'}</b></div><div><small>Seats</small><b>${b.seats}</b></div><div><small>Tickets</small><b>${n} ${n===1?'adult':'adults'}</b></div><div><small>Paid</small><b>GH₵ ${b.total}</b></div></div>
+    <div class="perf"></div><div class="qr">${qrSvg(b.ref)}<div><small>Booking code</small><b>${b.ref}</b><p>Doors open 30 minutes before the film starts.</p></div></div></div>
+  <button class="snack" data-a="soon" data-v="Pre-ordering snacks"><div class="em">🍿</div><div style="flex:1"><b>Skip the queue</b><small>Pre-order popcorn and drinks, ready at your seat.</small></div>${ic('chev',20)}</button>
+  <div class="two"><button class="btn out" data-a="go" data-v="home">Done</button><button class="btn gold" data-a="mybookings">My bookings</button></div>`};
+}
+function screenCinemas(){
+  const list=CINEMAS.filter(c=>S.cinF==='Nearest'||c[3].some(x=>x.startsWith(S.cinF.split(' ')[0])));
+  return {tab:'Cinemas',body:`
+  <div class="topbar"><h2 class="disp">Cinemas</h2><button class="round" data-a="soon" data-v="Cinema search" aria-label="Search cinemas">${ic('search',20)}</button></div>
+  <div class="chips">${['Nearest','IMAX','Dolby Atmos','VIP'].map(c=>`<button class="chip ${S.cinF===c?'on':''}" data-a="cf" data-v="${c}" aria-pressed="${S.cinF===c}">${c}</button>`).join('')}</div>
+  <div class="map"><svg viewBox="0 0 335 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="335" height="190" fill="#181824"/><path d="M-10 150 C60 120 90 170 170 140 S300 90 350 110 L350 200 L-10 200Z" fill="#14202E"/><g stroke="#2A2A3C" stroke-width="7" fill="none" stroke-linecap="round"><path d="M-10 60 L120 80 L200 40 L350 70"/><path d="M110 -10 L130 90 L120 200"/><path d="M230 -10 L210 60 L250 200"/></g><g stroke="#32324A" stroke-width="2.5" fill="none"><path d="M-10 100 L340 120"/><path d="M60 -10 L80 200"/><path d="M290 -10 L300 200"/></g><circle cx="150" cy="88" r="6" fill="#EDAA3B" opacity=".25"/><circle cx="150" cy="88" r="3" fill="#EDAA3B"/></svg>
+    <div class="pin" style="left:44%;top:46%"><b>Accra Mall</b><i></i></div><div class="pin alt" style="left:20%;top:72%"><b>West Hills</b><i></i></div><div class="pin alt" style="left:76%;top:34%"><b>Achimota</b><i></i></div></div>
+  <div class="sec"><h3>${S.cinF==='Nearest'?'Near you':S.cinF}</h3></div>
+  ${list.map(c=>`<div class="ccard"><div class="h"><div><h3 class="disp">${c[0]}</h3><div class="a">${c[1]}</div></div><span class="dist">${c[2]}</span></div><div class="f">${c[3].map(x=>`<span class="${x==='IMAX'?'g':''}">${x}</span>`).join('')}</div><div class="ft"><b>${c[4]}</b><span>${c[5]}</span></div></div>`).join('')}`};
+}
+function screenOffers(){
+  const card=S.user?`<div class="card"><small>Savannah Rewards, Bronze member</small><div class="pts">${spent()} <span>points</span></div><div class="bar"><i style="width:${Math.min(100,spent()/10)}%"></i></div><div class="nx">${Math.max(0,1000-spent())} points to Silver, which adds a free popcorn each month.</div></div>`
+    :`<div class="card"><small>Savannah Rewards</small><div class="pts" style="font-size:34px;line-height:1.05;max-width:11ch">Earn on every ticket</div><div class="nx" style="margin-top:10px">Sign in to see your points and how close you are to the next tier.</div><button class="btn" data-a="nav" data-v="Account">Sign in</button></div>`;
+  return {tab:'Offers',body:`
+  <div class="topbar"><h2 class="disp">Offers</h2><span class="round">${ic('bell',20)}</span></div>${card}
+  <div class="sec"><h3>Deals this week</h3></div>
+  <div class="offer o1"><div class="l"><div><big>2 for 1</big><small>Tuesdays</small></div></div><div class="r"><b>Two-for-one tickets</b><p>Buy one standard ticket, get the second free on any Tuesday show.</p><button class="code" data-a="copy" data-v="TUE2FOR1">TUE2FOR1</button></div></div>
+  <div class="offer o2"><div class="l"><div><big>30%</big><small>off</small></div></div><div class="r"><b>Student Thursdays</b><p>Show a valid student ID at the counter or scan it in the app.</p><button class="code" data-a="copy" data-v="STUDENT30">STUDENT30</button></div></div>
+  <div class="offer o3"><div class="l"><div><big>GH₵ 45</big><small>combo</small></div></div><div class="r"><b>Popcorn and drink combo</b><p>Pre-order with your ticket and collect without queuing.</p><button class="code" data-a="copy" data-v="COMBO45">COMBO45</button></div></div>`};
+}
+/* profile */
+function bookingsHTML(){
+  if(!S.bookings.length) return `<div class="empty"><div class="ico">${ic('ticket',34)}</div><h3 class="disp">No bookings yet</h3><p>Your ticket history will appear here once you make your first booking.</p><button class="btn gold" data-a="go" data-v="home">${ic('film',18)}Browse films</button></div>`;
+  const past=S.bookings.filter(b=>b.s==='past');
+  return `<div class="list">${S.bookings.map(b=>`<div class="bk ${b.s!=='up'?'dim':''}">${poster(b.k,'nopt')}<div><h4 class="disp">${FILMS[b.k].t}</h4><div class="m"><span>${ic('cal',13)}${b.ds}, ${b.t}</span><span>${ic('pin',13)}${b.branch}</span><span>${ic('chair',13)}Seats: ${b.seats}</span></div></div><div class="foot"><span class="ref">${b.ref}</span><span class="st ${b.s}">${stLabel[b.s]}</span></div></div>`).join('')}</div>
+  <button class="hlink" data-a="go" data-v="history"><span class="em">${ic('history',22)}</span><span style="flex:1"><b>Watch history</b><small>${past.length} ${past.length===1?'film':'films'} kept as stubs</small></span>${ic('chev',18)}</button>`;
+}
+function watchHTML(){
+  if(!S.watch.length) return `<div class="empty"><div class="ico">${ic('bookmark',34)}</div><h3 class="disp">Nothing saved yet</h3><p>Tap the bookmark on any film to keep it here for later.</p><button class="btn gold" data-a="go" data-v="home">${ic('film',18)}Browse films</button></div>`;
+  return `<div class="whead"><h3 class="disp">Your watchlist</h3><small>${S.watch.length} ${S.watch.length===1?'film':'films'}</small></div><div class="wgrid">${S.watch.map(k=>{const f=FILMS[k];return `<div class="wc"><div style="position:relative">${poster(k,'nopt')}<button class="wx" data-a="rm" data-v="${k}" aria-label="Remove ${f.t} from watchlist">${ic('x',14)}</button><span class="wr">${f.r?`${starMini.replace('<svg','<svg fill="currentColor" style="display:inline;vertical-align:-1px"')} ${f.r}`:'Coming soon'}</span></div><div class="wi"><b>${f.t}</b><small>${f.g}</small><button class="btn ${f.r?'gold':'out'}" data-a="film" data-v="${k}">${f.r?'Book now':'View film'}</button></div></div>`}).join('')}</div>`;
+}
+const tg=k=>`<span class="tg ${S.tg[k]?'on':''}" aria-hidden="true"></span>`;
+function settingsHTML(){const u=S.user;return `
+  <div class="grp"><h4 class="disp">${ic('user',17)}Personal details</h4>
+    <div class="row"><div class="l"><b>Name</b></div><div class="v">${esc(u.name)}</div></div>
+    <div class="row"><div class="l"><b>Email</b></div><div class="v" style="font-size:12.5px">${esc(u.email)}</div></div>
+    <button class="row" data-a="soon" data-v="Editing your phone number"><div class="l"><b>Phone</b></div><div class="v">${u.phone?esc(u.phone):'Add number'}${ic('chev',16)}</div></button></div>
+  <div class="grp"><h4 class="disp">${ic('bell',17)}Preferences</h4>
+    <button class="row" data-a="soon" data-v="Choosing a home cinema"><div class="l"><b>Home cinema</b><small>Shown first in showtimes</small></div><div class="v">Accra Mall${ic('chev',16)}</div></button>
+    <button class="row" role="switch" aria-checked="${S.tg.remind}" data-a="tg" data-v="remind"><div class="l"><b>Showtime reminders</b><small>Two hours before your film</small></div>${tg('remind')}</button>
+    <button class="row" role="switch" aria-checked="${S.tg.offers}" data-a="tg" data-v="offers"><div class="l"><b>Offers and premieres</b><small>Deals and invitations by email</small></div>${tg('offers')}</button></div>
+  <div class="grp"><h4 class="disp">${ic('shield',17)}Security</h4>
+    <button class="row" data-a="soon" data-v="Changing your password"><div class="l"><b>Change password</b></div>${ic('chev',18)}</button>
+    <button class="row danger" data-a="soon" data-v="Deleting your account"><div class="l"><b>Delete account</b><small>Removes your bookings and points</small></div>${ic('trash',18)}</button></div>`}
+function screenProfile(){
+  const u=S.user,up=S.bookings.filter(b=>b.s==='up').length,past=S.bookings.filter(b=>b.s==='past').length;
+  const pane=S.tab==='bookings'?bookingsHTML():S.tab==='watchlist'?watchHTML():settingsHTML();
+  return {tab:'Account',body:`
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="round" data-a="menu" aria-label="Open menu">${ic('menu',20)}</button><h2 class="disp">Profile</h2></div><button class="round" data-a="soon" data-v="Notifications" aria-label="Notifications">${ic('bell',20)}</button></div>
+  <div class="prof"><div class="av">${avatar()}<button class="camera" data-a="photo" aria-label="Change profile picture">${ic('camera',14)}</button></div>
+    <div class="pi"><div class="pname disp">${esc(u.name)}</div><div class="pmeta"><span>${ic('mail',14)}<i>${esc(u.email)}</i></span>${u.phone?`<span>${ic('phone',14)}<i>${esc(u.phone)}</i></span>`:''}</div>
+    <span class="tier">${starMini.replace('<svg','<svg class="ic"')}Bronze member</span></div></div>
+  <div class="acts"><button class="btn out" data-a="acct">${ic('gear',18)}Account settings</button><button class="btn warn" data-a="signout">${ic('logout',18)}Sign out</button></div>
+  <div class="stats"><div><b>${up}</b><small>Upcoming</small></div><div><b>${past}</b><small>Watched</small></div><div><b>${spent()}</b><small>Points</small></div><div><b>GH₵ ${spent()}</b><small>Spent</small></div></div>
+  ${tcase()}<div class="ptabs" id="ptabs" role="tablist">${[['bookings','My bookings'],['watchlist','Watchlist'],['settings','Settings']].map(([k,l])=>`<button role="tab" class="ptab ${S.tab===k?'on':''}" data-a="tab" data-v="${k}" aria-selected="${S.tab===k}">${l}</button>`).join('')}</div>
+  ${pane}`};
+}
+/* history */
+function screenHistory(){
+  const past=S.bookings.filter(b=>b.s==='past'),tot=past.reduce((t,b)=>t+FILMS[b.k].min,0);
+  const list=past.filter(b=>S.hf==='All'||(S.hf==='Rated'?b.rate>0:!b.rate));
+  const months=[...new Set(list.map(b=>b.mon))];
+  return {tab:'Account',body:`
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="round" data-a="back" aria-label="Back">${ic('back',22)}</button><h2 class="disp">Watch history</h2></div></div>
+  <div class="hs"><div><b>${past.length}</b><small>Films watched</small></div><div><b>${mins(tot)}</b><small>In the cinema</small></div></div>
+  <div class="chips" style="margin-top:16px">${['All','Rated','Not rated yet'].map(c=>`<button class="chip ${S.hf===c?'on':''}" data-a="hf" data-v="${c}" aria-pressed="${S.hf===c}">${c}</button>`).join('')}</div>
+  ${list.length?months.map(m=>`<div class="mon">${m}</div>${list.filter(b=>b.mon===m).map(b=>`
+    <div class="stub"><div class="t">${poster(b.k,'nopt')}<div><h4 class="disp">${FILMS[b.k].t}</h4><div class="m">${b.ds}, ${b.t}<br>${b.branch}<br>${b.fmt}, seats ${b.seats}</div></div></div>
+      <div class="b"><div class="stars" role="group" aria-label="Your rating">${[1,2,3,4,5].map(n=>`<button data-a="rate" data-id="${b.id}" data-v="${n}" aria-label="Rate ${n} of 5" aria-pressed="${(b.rate||0)>=n}">${starF((b.rate||0)>=n,20)}</button>`).join('')}</div><button class="again" data-a="film" data-v="${b.k}">Book again</button></div></div>`).join('')}`).join('')
+   :`<div class="empty"><div class="ico">${ic('history',34)}</div><h3 class="disp">${past.length?'No films here':'No stubs yet'}</h3><p>${past.length?'Change the filter to see the rest of your history.':'Films you have watched will be kept here, ready to rate.'}</p></div>`}`};
+}
+/* login */
+function screenLogin(){
+  const reg=S.mode==='register',f=S.form;
+  const fld=(label,name,type,icon,ph,ac)=>`<div class="field"><label for="f-${name}">${label}</label><div class="inp">${ic(icon,18)}<input id="f-${name}" name="${name}" type="${type}" value="${esc(f[name]||'')}" placeholder="${ph||''}" autocomplete="${ac||'off'}"></div></div>`;
+  const pw=`<div class="field"><label for="f-pw">Password</label><div class="inp">${ic('lock',18)}<input id="f-pw" name="pw" type="${S.showPw?'text':'password'}" value="${esc(f.pw)}" autocomplete="${reg?'new-password':'current-password'}"><button data-a="pw" aria-label="${S.showPw?'Hide':'Show'} password" style="display:grid;place-items:center">${ic(S.showPw?'eyeoff':'eye',18)}</button></div></div>`;
+  return {tab:'Account',body:`<div class="auth"><div class="sunb"></div>
+    <div class="logo"><i></i>Savannah</div>
+    <h2 class="disp">${reg?'Create your account':'Welcome back'}</h2>
+    <p class="sub">${reg?'Book seats, keep your ticket stubs and earn points.':S.next?'Sign in to continue. It takes a few seconds.':'Sign in to see your bookings and watchlist.'}</p>
+    ${reg?`<div class="two2">${fld('First names','fn','text','user','Ama','given-name')}${fld('Surname','sn','text','user','Owusu','family-name')}</div>${fld('Email','email','email','mail','you@example.com','email')}${fld('Phone (optional)','ph','tel','phone','+233 24 000 0000','tel')}`:fld('Email','email','email','mail','you@example.com','email')}
+    ${pw}
+    ${S.err?`<p class="err" role="alert">${esc(S.err)}</p>`:''}
+    ${!reg?`<button class="fg" data-a="soon" data-v="Password reset">Forgot password?</button>`:''}
+    <button class="btn gold" data-a="${reg?'register':'signin'}">${reg?'Create account':'Sign in'}</button>
+    <div class="alt">${reg?'Already have an account?':'New to Savannah?'}<button data-a="mode" data-v="${reg?'signin':'register'}">${reg?'Sign in':'Create account'}</button></div></div>`};
+}
+const SCREENS={trophies:screenTrophies,home:screenHome,detail:screenDetail,seats:screenSeats,ticket:screenTicket,cinemas:screenCinemas,offers:screenOffers,profile:screenProfile,history:screenHistory,login:screenLogin};
+
+/* ---- overlays ---- */
+function overlays(){
+  let o='';
+  if(S.sheet){
+    const c=S.crop;
+    o+=`<div class="scrim" data-a="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Change profile picture"><div class="grab"></div><div class="sb">
+      <h3 class="disp">Change profile picture</h3><p>Upload a photo and adjust it below, or paste an image link.</p>
+      <div class="crop"><div class="photo" id="photo" style="transform:translate(${c.x*.4}%,${c.y*.4}%) scale(${c.z/100})"></div></div>
+      <div class="mseg"><button class="${S.sheetTab==='up'?'on':''}" data-a="stab" data-v="up">Upload</button><button class="${S.sheetTab==='url'?'on':''}" data-a="stab" data-v="url">From link</button></div>
+      ${S.sheetTab==='up'?`<button class="file" data-a="soon" data-v="Choosing a photo">${ic('img',22)}<span><b style="font-weight:500">kwame-portrait.jpg</b><small>Tap to choose a different image</small></span></button>
+        <div class="sl"><div class="h"><span>Zoom</span><b id="zL">${c.z}%</b></div><input type="range" id="z" min="100" max="300" value="${c.z}" aria-label="Zoom"></div>
+        <div class="sl"><div class="h"><span>Horizontal</span><b id="xL">${c.x}</b></div><input type="range" id="x" min="-100" max="100" value="${c.x}" aria-label="Horizontal position"></div>
+        <div class="sl"><div class="h"><span>Vertical</span><b id="yL">${c.y}</b></div><input type="range" id="y" min="-100" max="100" value="${c.y}" aria-label="Vertical position"></div>
+        <button class="btn out reset" data-a="resetCrop">Reset crop</button>`
+      :`<input class="urlin" type="url" placeholder="https://example.com/photo.jpg" aria-label="Image link">`}
+    </div><div class="foot"><button class="link" data-a="removePhoto">${ic('trash',17)}Remove photo</button><div class="r"><button class="btn out" data-a="closeSheet">Cancel</button><button class="btn gold" data-a="saveSheet">${ic('check',18)}Save</button></div></div></div>`;
+  }
+  if(S.drawer){
+    const dl=(items)=>`<div class="dl">${items.map(([i,l,k,on])=>`<button class="${on?'on':''}" data-a="dl" data-v="${k}">${ic(i,21)}${l}</button>`).join('')}</div>`;
+    o+=`<div class="scrim" style="z-index:55" data-a="closeMenu"></div><aside class="drawer" aria-label="Menu">
+      <div class="dh"><div class="logo" style="font-size:19px"><i style="width:22px;height:22px"></i>Savannah</div><button class="round" style="background:none" data-a="closeMenu" aria-label="Close menu">${ic('x',22)}</button></div>
+      ${S.user?`<div class="dme">${avatar()}<div><b>${esc(S.user.name)}</b><small>Bronze member, ${spent()} points</small></div></div>`
+        :`<div class="dsign"><button class="btn gold" data-a="dl" data-v="signin">Sign in</button><button class="btn out" data-a="dl" data-v="register">Join</button></div>`}
+      ${dl([['film','Now showing','home',S.screen==='home'],['cal','Coming soon','home'],['pin','Cinemas','cinemas',S.screen==='cinemas'],['star','Events','soon:Events'],['tag','Offers','offers',S.screen==='offers'],['info','About','soon:About']])}
+      <div class="dlab">Your account</div>
+      ${dl([['ticket','My bookings','bookings',S.screen==='profile'&&S.tab==='bookings'],['history','Watch history','history',S.screen==='history'],['trophy','My trophies','trophies',S.screen==='trophies'],['bookmark','Watchlist','watchlist',S.screen==='profile'&&S.tab==='watchlist'],['gear','Settings','settings',S.screen==='profile'&&S.tab==='settings']])}
+      <div class="dfoot">© 2026 Savannah Cinemas</div></aside>`;
+  }
+  if(S.tdetail) o+=tSheet(S.tdetail);
+  if(S.celebrate.length) o+=celebHTML();
+  return o;
+}
+
+/* ================= render ================= */
+function render(reset){
+  const old=root.querySelector('.body');const keep=reset||!old?0:old.scrollTop;
+  const sc=SCREENS[S.screen]();
+  root.innerHTML=`${DEFS}${status}<div class="body" style="${sc.style||''}">${sc.body}</div>${sc.cta||''}${sc.tab?tabbar(sc.tab):''}${overlays()}<div class="homebar"></div>`;
+  root.querySelector('.body').scrollTop=keep;
+}
+
+/* ================= events ================= */
+phone.addEventListener('click',e=>{
+  const el=e.target.closest('[data-a]'); if(!el||!phone.contains(el)) return;
+  const a=el.dataset.a,v=el.dataset.v;
+  switch(a){
+    case 'go': go(v);break;
+    case 'back': back();break;
+    case 'nav': nav(v);break;
+    case 'film': openFilm(v);break;
+    case 'menu': S.drawer=true;render(false);break;
+    case 'closeMenu': S.drawer=false;render(false);break;
+    case 'dl': {
+      S.drawer=false;
+      if(v==='home')go('home'); else if(v==='cinemas')go('cinemas'); else if(v==='offers')go('offers');
+      else if(v.startsWith('soon:')){render(false);toast(v.slice(5)+' isn\'t in this prototype yet')}
+      else if(v==='signin'||v==='register'){setMode(v);S.next=null;go('login')}
+      else if(v==='trophies') requireAuth(()=>go('trophies'));
+      else if(v==='history') requireAuth(()=>go('history'));
+      else requireAuth(()=>{S.tab=v;go('profile')});
+      break}
+    case 'soon': toast(v+' isn\'t in this prototype yet');break;
+    case 'wl': toggleWatch(v);break;
+    case 'date': S.dateIdx=+v;if(S.dateIdx===0&&S.time.fmt==='Dolby Atmos'&&S.time.t==='2:15 PM')S.time={fmt:'IMAX',t:'7:45 PM'};render(false);break;
+    case 'time': S.time={fmt:el.dataset.fmt,t:v};render(false);break;
+    case 'seat': S.seats.has(v)?S.seats.delete(v):(S.seats.size<6?S.seats.add(v):toast('You can pick up to 6 seats'));render(false);break;
+    case 'pay': requireAuth(pay);break;
+    case 'mybookings': S.tab='bookings';go('profile');break;
+    case 'cf': S.cinF=v;render(false);break;
+    case 'copy': navigator.clipboard&&navigator.clipboard.writeText(v).catch(()=>{});toast(v+' copied');break;
+    case 'tab': S.tab=v;render(false);break;
+    case 'rm': S.watch=S.watch.filter(k=>k!==v);toast('Removed from watchlist');render(false);break;
+    case 'tg': S.tg[v]=!S.tg[v];render(false);break;
+    case 'hf': S.hf=v;render(false);break;
+    case 'rate': {const b=S.bookings.find(x=>x.id===el.dataset.id);if(b){b.rate=(b.rate===+v)?0:+v;const fr=syncTrophies();if(fr.length)S.celebrate=fr;render(false)}break}
+    case 'acct': S.tab='settings';render(false);{const t=document.getElementById('ptabs');root.querySelector('.body').scrollTop=t.offsetTop-60}break;
+    case 'signout': S.user=null;S.bookings=[];S.watch=[];S.photo=null;S.last=null;S.earned={};S.celebrate=[];S.tdetail=null;S.mode='signin';S.next=null;S.stack=[];S.screen='login';render(true);toast('Signed out');break;
+    case 'mode': setMode(v);render(false);break;
+    case 'pw': S.showPw=!S.showPw;render(false);{const i=document.getElementById('f-pw');i&&i.focus()}break;
+    case 'signin': {
+      const em=(S.form.email||'').trim();
+      if(!/^\S+@\S+\.\S+$/.test(em)){S.err='Enter a valid email address, like you@example.com.';render(false);break}
+      if(!S.form.pw){S.err='Enter your password to sign in.';render(false);break}
+      signInKwame(em);finishAuth();break}
+    case 'register': {
+      const f=S.form,em=(f.email||'').trim();
+      if(!f.fn.trim()||!f.sn.trim()){S.err='Enter your first names and surname.';render(false);break}
+      if(!/^\S+@\S+\.\S+$/.test(em)){S.err='Enter a valid email address, like you@example.com.';render(false);break}
+      if((f.pw||'').length<6){S.err='Choose a password with at least 6 characters.';render(false);break}
+      S.user={name:`${f.fn.trim()} ${f.sn.trim()}`,ini:(f.fn.trim()[0]+f.sn.trim()[0]).toUpperCase(),email:em,phone:f.ph.trim()};S.bookings=[];S.watch=[];S.earned={};finishAuth();break}
+    case 'trophies': go('trophies');break;
+    case 'tf': S.tf=v;render(false);break;
+    case 'tdetail': S.tdetail=v;render(false);break;
+    case 'closeT': S.tdetail=null;render(false);break;
+    case 'tcta': S.tdetail=null;go(v);break;
+    case 'closeCeleb': S.celebrate=[];render(false);break;
+    case 'celebView': S.celebrate=[];S.tdetail=null;if(S.screen==='trophies')render(false);else go('trophies');break;
+    case 'photo': S.crop=S.photo?{...S.photo}:{z:100,x:0,y:0};S.sheetTab='up';S.sheet=true;render(false);break;
+    case 'closeSheet': S.sheet=false;render(false);break;
+    case 'stab': S.sheetTab=v;render(false);break;
+    case 'resetCrop': S.crop={z:100,x:0,y:0};render(false);break;
+    case 'saveSheet': S.photo={...S.crop};S.sheet=false;render(false);toast('Profile picture updated');break;
+    case 'removePhoto': S.photo=null;S.sheet=false;render(false);toast('Profile picture removed');break;
+  }
+});
+function setMode(m){S.mode=m;S.err='';if(m==='register'&&S.form.email===KWAME.email){S.form.email='';S.form.pw=''}if(m==='signin'&&!S.form.email){S.form.email=KWAME.email;S.form.pw='password1'}}
+function finishAuth(){
+  S.err='';const n=S.next;S.next=null;
+  if(n){n()} else {S.tab='bookings';go('profile')}
+  toast('Signed in as '+S.user.name.split(' ')[0]);
+}
+phone.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='q'){S.q=t.value;document.getElementById('homeMain').innerHTML=homeMain();return}
+  if(t.name&&t.closest('.auth')){S.form[t.name]=t.value;return}
+  if(['z','x','y'].includes(t.id)){
+    S.crop[t.id]=+t.value;const c=S.crop;
+    document.getElementById('photo').style.transform=`translate(${c.x*.4}%,${c.y*.4}%) scale(${c.z/100})`;
+    document.getElementById('zL').textContent=c.z+'%';document.getElementById('xL').textContent=c.x;document.getElementById('yL').textContent=c.y;
+  }
+});
+phone.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.closest('.auth')&&e.target.tagName==='INPUT'){const b=root.querySelector('.auth .btn.gold');b&&b.click()}
+  if(e.key==='Escape'){if(S.sheet){S.sheet=false;render(false)}else if(S.drawer){S.drawer=false;render(false)}}
+});
+
+/* ---- guide panel ---- */
+function ensureUser(){if(!S.user)signInKwame()}
+document.querySelector('.panel').addEventListener('click',e=>{
+  const b=e.target.closest('[data-j]');if(!b)return;const j=b.dataset.j;
+  if(j==='reset'){S=fresh();render(true);return}
+  S.drawer=false;S.sheet=false;S.stack=[];S.celebrate=[];S.tdetail=null;
+  const to=s=>{S.screen=s;render(true)};
+  if(j==='home'){S.q='';to('home')}
+  else if(j==='detail'){S.film='harm';to('detail')}
+  else if(j==='seats'){to('seats')}
+  else if(j==='ticket'){ensureUser();if(!S.last)S.last={id:'demo',k:'harm',ds:'Wed 30 Sep',t:'7:45 PM',fmt:'IMAX',branch:'Savannah Accra Mall',seats:'F5, F6',ref:'SVN-4K7Q2',s:'up',total:170,mon:'September 2026'};to('ticket')}
+  else if(j==='cinemas'||j==='offers'){to(j)}
+  else if(j==='signin'||j==='register'){S.user=null;S.bookings=[];S.watch=[];S.next=null;setMode(j);to('login')}
+  else if(j==='profile'||j==='watchlist'||j==='settings'){ensureUser();S.tab=j==='profile'?'bookings':j;to('profile')}
+  else if(j==='history'){ensureUser();S.stack=['profile'];to('history')}
+  else if(j==='photo'){ensureUser();S.tab='bookings';S.crop=S.photo?{...S.photo}:{z:130,x:10,y:-8};S.sheetTab='up';S.sheet=true;to('profile')}
+  else if(j==='new'){S.user={name:'Ama Owusu',ini:'AO',email:'ama.owusu@example.com',phone:''};S.bookings=[];S.watch=[];S.tab='bookings';to('profile')}
+  else if(j==='trophies'){ensureUser();S.tf='All';S.stack=['profile'];to('trophies')}
+  else if(j==='tdetail'){ensureUser();S.tf='All';S.stack=['profile'];S.tdetail='regular';to('trophies')}
+  else if(j==='celebrate'){ensureUser();if(!S.earned.regular){S.bookings.unshift({id:'demo'+Date.now(),k:'harm',ds:'Wed 30 Sep',t:'7:45 PM',fmt:'IMAX',branch:'Savannah Accra Mall',seats:'F5, F6',ref:'SVN-4K7Q2',s:'up',total:170,mon:'September 2026'})}const fr=syncTrophies();S.celebrate=fr.length?fr:['regular'];S.stack=['profile'];to('trophies')}
+  else if(j==='tnew'){S.user={name:'Ama Owusu',ini:'AO',email:'ama.owusu@example.com',phone:''};S.bookings=[];S.watch=[];S.earned={};S.stack=['profile'];to('trophies')}
+  else if(j==='menu'){ensureUser();S.drawer=true;to('profile')}
+});
+
+render(true);
+</script>
+</body>
+</html>

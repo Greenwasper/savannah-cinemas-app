@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Savannah Cinemas — iPhone 18 Pro",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "deviceId": "21483C2D-405E-4D5E-AC84-B7F96FDCAA35"
+    }
+  ]
+}
