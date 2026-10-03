@@ -1,9 +1,12 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/frosted_bottom_navigation.dart';
+import '../widgets/savannah_menu_drawer.dart';
+import 'cinemas_screen.dart';
+import 'login_screen.dart';
+import 'tickets_screen.dart';
 
 class Movie {
   const Movie({
@@ -53,6 +56,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _searchController = TextEditingController();
   int _selectedTab = 0;
   String _query = '';
@@ -82,10 +86,71 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _handleMenuSelection(String destination) {
+    if (destination == 'Now showing') return;
+
+    if (destination == 'Cinemas') {
+      _openCinemas();
+      return;
+    } else if (destination == 'My bookings') {
+      _openTickets();
+      return;
+    } else if (destination == 'Settings') {
+      setState(() => _selectedTab = 3);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _comingSoon(destination);
+    });
+  }
+
+  void _openCinemas() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const CinemasScreen()),
+    );
+  }
+
+  void _openTickets() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const TicketsScreen()),
+    );
+  }
+
+  void _selectBottomDestination(int index) {
+    if (index == 1) {
+      _openCinemas();
+      return;
+    }
+    if (index == 2) {
+      _openTickets();
+      return;
+    }
+
+    setState(() => _selectedTab = index);
+    if (index != 0) {
+      _comingSoon(['Films', 'Cinemas', 'Tickets', 'Account'][index]);
+    }
+  }
+
+  void _signOut() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       extendBody: true,
+      drawerScrimColor: const Color(0xB806060A),
+      drawerEdgeDragWidth: 34,
+      drawer: SavannahMenuDrawer(
+        selectedDestination: 'Now showing',
+        onSelect: _handleMenuSelection,
+        onSignOut: _signOut,
+      ),
       body: Stack(
         children: [
           CustomScrollView(
@@ -166,53 +231,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              color: Color(0xA6191923),
-              border: Border(
-                top: BorderSide(color: Color(0x24353549), width: .8),
-              ),
-            ),
-            child: NavigationBar(
-              height: 78,
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-              surfaceTintColor: Colors.transparent,
-              indicatorColor: const Color(0x2EEDAA3B),
-              selectedIndex: _selectedTab,
-              onDestinationSelected: (index) {
-                setState(() => _selectedTab = index);
-                if (index != 0) {
-                  _comingSoon(
-                    ['Films', 'Cinemas', 'Tickets', 'Account'][index],
-                  );
-                }
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.local_movies_outlined),
-                  selectedIcon: Icon(Icons.local_movies_rounded),
-                  label: 'Films',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.location_on_outlined),
-                  label: 'Cinemas',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.confirmation_num_outlined),
-                  label: 'Tickets',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline_rounded),
-                  label: 'Account',
-                ),
-              ],
-            ),
-          ),
-        ),
+      bottomNavigationBar: FrostedBottomNavigation(
+        selectedIndex: _selectedTab,
+        onDestinationSelected: _selectBottomDestination,
       ),
     );
   }
@@ -230,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _CircleButton(
             icon: Icons.menu_rounded,
             tooltip: 'Menu',
-            onPressed: () => _comingSoon('The menu'),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
           const SizedBox(width: 8),
           const Expanded(child: BrandMark(compact: true)),
