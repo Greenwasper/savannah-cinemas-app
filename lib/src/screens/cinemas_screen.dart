@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../app_routes.dart';
 import '../theme.dart';
 import '../widgets/frosted_bottom_navigation.dart';
 import '../widgets/savannah_menu_drawer.dart';
-import 'home_screen.dart';
-import 'login_screen.dart';
-import 'tickets_screen.dart';
 
 class CinemaBranch {
   const CinemaBranch({
@@ -91,20 +89,10 @@ class _CinemasScreenState extends State<CinemasScreen> {
     );
   }
 
-  void _openFilms() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
-    );
-  }
-
   void _handleMenuSelection(String destination) {
-    if (destination == 'Cinemas') return;
-    if (destination == 'Now showing') {
-      _openFilms();
-      return;
-    }
-    if (destination == 'My bookings') {
-      _openTickets();
+    final route = routeForDrawerDestination(destination);
+    if (route != null) {
+      Navigator.of(context).pushReplacementNamed(route);
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -113,26 +101,13 @@ class _CinemasScreenState extends State<CinemasScreen> {
   }
 
   void _selectBottomDestination(int index) {
-    if (index == 0) {
-      _openFilms();
-    } else if (index == 2) {
-      _openTickets();
-    } else if (index != 1) {
-      _showMessage(['Films', 'Cinemas', 'Tickets', 'Account'][index]);
-    }
-  }
-
-  void _openTickets() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const TicketsScreen()),
-    );
+    openPrimaryDestination(context, currentIndex: 0, destinationIndex: index);
   }
 
   void _signOut() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
   }
 
   @override
@@ -144,7 +119,6 @@ class _CinemasScreenState extends State<CinemasScreen> {
       drawerScrimColor: const Color(0xB806060A),
       drawerEdgeDragWidth: 34,
       drawer: SavannahMenuDrawer(
-        selectedDestination: 'Cinemas',
         onSelect: _handleMenuSelection,
         onSignOut: _signOut,
       ),
@@ -154,10 +128,9 @@ class _CinemasScreenState extends State<CinemasScreen> {
             slivers: [
               SliverToBoxAdapter(child: _buildHeader()),
               SliverToBoxAdapter(child: _buildFilters()),
-              const SliverToBoxAdapter(child: _CinemaMap()),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 27, 20, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
                   child: Row(
                     children: [
                       Expanded(
@@ -215,7 +188,7 @@ class _CinemasScreenState extends State<CinemasScreen> {
         ],
       ),
       bottomNavigationBar: FrostedBottomNavigation(
-        selectedIndex: 1,
+        selectedIndex: 0,
         onDestinationSelected: _selectBottomDestination,
       ),
     );
@@ -319,195 +292,6 @@ class _CinemasScreenState extends State<CinemasScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _CinemaMap extends StatelessWidget {
-  const _CinemaMap();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 205,
-      margin: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: const Color(0xFF181824),
-        borderRadius: BorderRadius.circular(21),
-        border: Border.all(color: SavannahColors.line),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              const Positioned.fill(child: CustomPaint(painter: _MapPainter())),
-              Positioned(
-                left: constraints.maxWidth * .43,
-                top: constraints.maxHeight * .35,
-                child: const _MapPin(label: 'Accra Mall', primary: true),
-              ),
-              Positioned(
-                left: constraints.maxWidth * .69,
-                top: constraints.maxHeight * .18,
-                child: const _MapPin(label: 'Tema'),
-              ),
-              Positioned(
-                left: constraints.maxWidth * .12,
-                top: constraints.maxHeight * .59,
-                child: const _MapPin(label: 'Kumasi'),
-              ),
-              Positioned(
-                left: 13,
-                bottom: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xD914141C),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.my_location_rounded,
-                        color: SavannahColors.gold,
-                        size: 14,
-                      ),
-                      SizedBox(width: 5),
-                      Text(
-                        'Greater Accra',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _MapPainter extends CustomPainter {
-  const _MapPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final water = Paint()..color = const Color(0xFF14202E);
-    final waterPath = Path()
-      ..moveTo(0, size.height * .78)
-      ..cubicTo(
-        size.width * .22,
-        size.height * .56,
-        size.width * .32,
-        size.height,
-        size.width * .58,
-        size.height * .73,
-      )
-      ..cubicTo(
-        size.width * .75,
-        size.height * .54,
-        size.width * .86,
-        size.height * .42,
-        size.width,
-        size.height * .55,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(waterPath, water);
-
-    final mainRoad = Paint()
-      ..color = const Color(0xFF2A2A3C)
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    final road = Paint()
-      ..color = const Color(0xFF35354B)
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(-10, size.height * .28)
-        ..lineTo(size.width * .36, size.height * .42)
-        ..lineTo(size.width * .62, size.height * .18)
-        ..lineTo(size.width + 10, size.height * .34),
-      mainRoad,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(size.width * .3, -10)
-        ..lineTo(size.width * .36, size.height * .48)
-        ..lineTo(size.width * .31, size.height + 10),
-      mainRoad,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(size.width * .72, -10)
-        ..lineTo(size.width * .64, size.height * .31)
-        ..lineTo(size.width * .76, size.height + 10),
-      mainRoad,
-    );
-    canvas.drawLine(
-      Offset(-10, size.height * .55),
-      Offset(size.width + 10, size.height * .66),
-      road,
-    );
-    canvas.drawLine(
-      Offset(size.width * .17, -10),
-      Offset(size.width * .23, size.height + 10),
-      road,
-    );
-    canvas.drawLine(
-      Offset(size.width * .88, -10),
-      Offset(size.width * .9, size.height + 10),
-      road,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _MapPin extends StatelessWidget {
-  const _MapPin({required this.label, this.primary = false});
-  final String label;
-  final bool primary;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = primary ? SavannahColors.gold : SavannahColors.surfaceRaised;
-    return FractionalTranslation(
-      translation: const Offset(-.5, -1),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: primary ? SavannahColors.goldInk : SavannahColors.text,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          Container(width: 2, height: 8, color: color),
-        ],
       ),
     );
   }

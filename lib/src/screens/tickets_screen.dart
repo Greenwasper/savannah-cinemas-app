@@ -2,12 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../app_routes.dart';
 import '../theme.dart';
 import '../widgets/frosted_bottom_navigation.dart';
 import '../widgets/savannah_menu_drawer.dart';
-import 'cinemas_screen.dart';
-import 'home_screen.dart';
-import 'login_screen.dart';
 
 class TicketsScreen extends StatefulWidget {
   const TicketsScreen({super.key});
@@ -26,30 +24,15 @@ class _TicketsScreenState extends State<TicketsScreen> {
     );
   }
 
-  void _replaceWith(Widget screen) {
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute<void>(builder: (_) => screen));
-  }
-
   void _selectBottomDestination(int index) {
-    if (index == 0) {
-      _replaceWith(const HomeScreen());
-    } else if (index == 1) {
-      _replaceWith(const CinemasScreen());
-    } else if (index == 3) {
-      _showMessage('Account');
-    }
+    openPrimaryDestination(context, currentIndex: 3, destinationIndex: index);
   }
 
   void _handleMenuSelection(String destination) {
     if (destination == 'My bookings') return;
-    if (destination == 'Now showing') {
-      _replaceWith(const HomeScreen());
-      return;
-    }
-    if (destination == 'Cinemas') {
-      _replaceWith(const CinemasScreen());
+    final route = routeForDrawerDestination(destination);
+    if (route != null) {
+      Navigator.of(context).pushReplacementNamed(route);
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -58,10 +41,9 @@ class _TicketsScreenState extends State<TicketsScreen> {
   }
 
   void _signOut() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
   }
 
   @override
@@ -118,7 +100,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
         ],
       ),
       bottomNavigationBar: FrostedBottomNavigation(
-        selectedIndex: 2,
+        selectedIndex: 3,
         onDestinationSelected: _selectBottomDestination,
       ),
     );

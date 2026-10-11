@@ -39,13 +39,14 @@ class FrostedBottomNavigation extends StatelessWidget {
                 label: 'Films',
               ),
               NavigationDestination(
-                icon: Icon(Icons.location_on_outlined),
-                selectedIcon: Icon(Icons.location_on_rounded),
-                label: 'Cinemas',
+                icon: Icon(Icons.star_outline_rounded),
+                selectedIcon: Icon(Icons.star_rounded),
+                label: 'Events',
               ),
               NavigationDestination(
-                icon: Icon(Icons.confirmation_num_outlined),
-                label: 'Tickets',
+                icon: Icon(Icons.local_offer_outlined),
+                selectedIcon: Icon(Icons.local_offer_rounded),
+                label: 'Offers',
               ),
               NavigationDestination(
                 icon: Icon(Icons.person_outline_rounded),

@@ -8,7 +8,7 @@ class SavannahMenuDrawer extends StatelessWidget {
     super.key,
     required this.onSelect,
     required this.onSignOut,
-    this.selectedDestination = 'Now showing',
+    this.selectedDestination = '',
   });
 
   final ValueChanged<String> onSelect;
@@ -47,43 +47,9 @@ class SavannahMenuDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
                 children: [
-                  const _MemberCard(),
-                  const SizedBox(height: 15),
-                  _MenuTile(
-                    icon: Icons.local_movies_rounded,
-                    label: 'Now showing',
-                    selected: selectedDestination == 'Now showing',
-                    onTap: () => _choose(context, 'Now showing'),
-                  ),
-                  _MenuTile(
-                    icon: Icons.calendar_month_outlined,
-                    label: 'Coming soon',
-                    selected: selectedDestination == 'Coming soon',
-                    onTap: () => _choose(context, 'Coming soon'),
-                  ),
-                  _MenuTile(
-                    icon: Icons.location_on_outlined,
-                    label: 'Cinemas',
-                    selected: selectedDestination == 'Cinemas',
-                    onTap: () => _choose(context, 'Cinemas'),
-                  ),
-                  _MenuTile(
-                    icon: Icons.star_border_rounded,
-                    label: 'Events',
-                    selected: selectedDestination == 'Events',
-                    onTap: () => _choose(context, 'Events'),
-                  ),
-                  _MenuTile(
-                    icon: Icons.local_offer_outlined,
-                    label: 'Offers',
-                    selected: selectedDestination == 'Offers',
-                    onTap: () => _choose(context, 'Offers'),
-                  ),
-                  _MenuTile(
-                    icon: Icons.info_outline_rounded,
-                    label: 'About',
-                    selected: selectedDestination == 'About',
-                    onTap: () => _choose(context, 'About'),
+                  _MemberCard(
+                    selected: selectedDestination == 'Profile',
+                    onTap: () => _choose(context, 'Profile'),
                   ),
                   const _SectionLabel('Your account'),
                   _MenuTile(
@@ -118,6 +84,12 @@ class SavannahMenuDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   const Divider(color: SavannahColors.line),
+                  _MenuTile(
+                    icon: Icons.info_outline_rounded,
+                    label: 'About',
+                    selected: selectedDestination == 'About',
+                    onTap: () => _choose(context, 'About'),
+                  ),
                   _MenuTile(
                     icon: Icons.help_outline_rounded,
                     label: 'Help and support',
@@ -155,59 +127,76 @@ class SavannahMenuDrawer extends StatelessWidget {
 }
 
 class _MemberCard extends StatelessWidget {
-  const _MemberCard();
+  const _MemberCard({required this.onTap, required this.selected});
+
+  final VoidCallback onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: SavannahColors.surface,
+    return Material(
+      color: selected ? const Color(0x1FEDAA3B) : SavannahColors.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: SavannahColors.line),
+        side: BorderSide(
+          color: selected ? SavannahColors.gold : SavannahColors.line,
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFF4C25E), Color(0xFFD2512F)],
-              ),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.person_rounded,
-              color: SavannahColors.goldInk,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cinema lover',
-                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'Bronze member  •  0 points',
-                  style: TextStyle(
-                    color: SavannahColors.gold,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFF4C25E), Color(0xFFD2512F)],
                   ),
                 ),
-              ],
-            ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: SavannahColors.goldInk,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cinema lover',
+                      style: TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Bronze member  •  0 points',
+                      style: TextStyle(
+                        color: SavannahColors.gold,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: SavannahColors.muted,
+              ),
+            ],
           ),
-          const Icon(Icons.chevron_right_rounded, color: SavannahColors.muted),
-        ],
+        ),
       ),
     );
   }

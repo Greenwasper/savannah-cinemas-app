@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../app_routes.dart';
 import '../theme.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/frosted_bottom_navigation.dart';
 import '../widgets/savannah_menu_drawer.dart';
-import 'cinemas_screen.dart';
-import 'login_screen.dart';
-import 'tickets_screen.dart';
 
 class Movie {
   const Movie({
@@ -20,6 +18,43 @@ class Movie {
   final double rating;
   final String poster;
 }
+
+class _CinemaChoice {
+  const _CinemaChoice({
+    required this.id,
+    required this.shortName,
+    required this.name,
+    required this.address,
+  });
+
+  final String id;
+  final String shortName;
+  final String name;
+  final String address;
+}
+
+const _cinemaChoices = [
+  _CinemaChoice(
+    id: 'accra-mall',
+    shortName: 'Accra Mall',
+    name: 'Accra Mall Cinema',
+    address: 'Accra Mall, Spintex Road',
+  ),
+  _CinemaChoice(
+    id: 'tema',
+    shortName: 'Tema',
+    name: 'Tema Shopping Cinema',
+    address: 'Tema Community 25',
+  ),
+  _CinemaChoice(
+    id: 'kumasi-city',
+    shortName: 'Kumasi City',
+    name: 'Kumasi City Cinema',
+    address: 'Kumasi City Mall, Lake Road',
+  ),
+];
+
+String _activeCinemaId = _cinemaChoices.first.id;
 
 const _movies = [
   Movie(
@@ -58,7 +93,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _searchController = TextEditingController();
-  int _selectedTab = 0;
+  _CinemaChoice _selectedCinema = _cinemaChoices.firstWhere(
+    (cinema) => cinema.id == _activeCinemaId,
+  );
   String _query = '';
   bool _saved = false;
 
@@ -87,16 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleMenuSelection(String destination) {
-    if (destination == 'Now showing') return;
-
-    if (destination == 'Cinemas') {
-      _openCinemas();
+    final route = routeForDrawerDestination(destination);
+    if (route != null) {
+      Navigator.of(context).pushReplacementNamed(route);
       return;
-    } else if (destination == 'My bookings') {
-      _openTickets();
-      return;
-    } else if (destination == 'Settings') {
-      setState(() => _selectedTab = 3);
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -104,39 +135,103 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _openCinemas() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const CinemasScreen()),
-    );
-  }
-
-  void _openTickets() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const TicketsScreen()),
-    );
-  }
-
   void _selectBottomDestination(int index) {
-    if (index == 1) {
-      _openCinemas();
-      return;
-    }
-    if (index == 2) {
-      _openTickets();
-      return;
-    }
+    openPrimaryDestination(context, currentIndex: 0, destinationIndex: index);
+  }
 
-    setState(() => _selectedTab = index);
-    if (index != 0) {
-      _comingSoon(['Films', 'Cinemas', 'Tickets', 'Account'][index]);
-    }
+  Future<void> _showCinemaPicker() async {
+    final selection = await showModalBottomSheet<_CinemaChoice>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: SavannahColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 2, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Choose your cinema',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Choose the cinema location you want to browse.',
+                style: TextStyle(color: SavannahColors.muted),
+              ),
+              const SizedBox(height: 16),
+              for (final cinema in _cinemaChoices)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Material(
+                    color: cinema.id == _selectedCinema.id
+                        ? const Color(0x1FEDAA3B)
+                        : SavannahColors.surfaceRaised,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
+                      key: Key('cinemaChoice-${cinema.id}'),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 4,
+                      ),
+                      leading: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: cinema.id == _selectedCinema.id
+                              ? SavannahColors.gold
+                              : const Color(0x24EDAA3B),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.location_on_outlined,
+                          color: cinema.id == _selectedCinema.id
+                              ? SavannahColors.goldInk
+                              : SavannahColors.gold,
+                        ),
+                      ),
+                      title: Text(
+                        cinema.name,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      subtitle: Text(cinema.address),
+                      trailing: cinema.id == _selectedCinema.id
+                          ? const Icon(
+                              Icons.check_circle_rounded,
+                              color: SavannahColors.gold,
+                            )
+                          : const Icon(
+                              Icons.chevron_right_rounded,
+                              color: SavannahColors.muted,
+                            ),
+                      onTap: () => Navigator.of(sheetContext).pop(cinema),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selection == null) return;
+    setState(() {
+      _selectedCinema = selection;
+      _activeCinemaId = selection.id;
+    });
   }
 
   void _signOut() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
   }
 
   @override
@@ -147,7 +242,6 @@ class _HomeScreenState extends State<HomeScreen> {
       drawerScrimColor: const Color(0xB806060A),
       drawerEdgeDragWidth: 34,
       drawer: SavannahMenuDrawer(
-        selectedDestination: 'Now showing',
         onSelect: _handleMenuSelection,
         onSignOut: _signOut,
       ),
@@ -232,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       bottomNavigationBar: FrostedBottomNavigation(
-        selectedIndex: _selectedTab,
+        selectedIndex: 0,
         onDestinationSelected: _selectBottomDestination,
       ),
     );
@@ -257,20 +351,24 @@ class _HomeScreenState extends State<HomeScreen> {
           const Expanded(child: BrandMark(compact: true)),
           const SizedBox(width: 8),
           InkWell(
+            key: const Key('cinemaSelector'),
             borderRadius: BorderRadius.circular(30),
-            onTap: () => _comingSoon('Cinema selection'),
+            onTap: _showCinemaPicker,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
               decoration: BoxDecoration(
                 color: SavannahColors.surface,
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.location_on_outlined, size: 16),
-                  SizedBox(width: 5),
-                  Text('Accra Mall', style: TextStyle(fontSize: 12.5)),
-                  Icon(Icons.keyboard_arrow_down_rounded, size: 17),
+                  const Icon(Icons.location_on_outlined, size: 16),
+                  const SizedBox(width: 5),
+                  Text(
+                    _selectedCinema.shortName,
+                    style: const TextStyle(fontSize: 12.5),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down_rounded, size: 17),
                 ],
               ),
             ),
